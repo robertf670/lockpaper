@@ -7,7 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// Service class for handling biometric authentication.
 class BiometricsService {
-  final LocalAuthentication _auth = LocalAuthentication();
+  // Accept LocalAuthentication via constructor
+  final LocalAuthentication _auth;
+
+  // Constructor with default instance for normal use
+  BiometricsService({LocalAuthentication? auth}) 
+    : _auth = auth ?? LocalAuthentication();
 
   /// Checks if the device supports biometrics and if they are enrolled.
   Future<bool> get canAuthenticate async {
@@ -60,5 +65,6 @@ class BiometricsService {
 
 /// Provider for the [BiometricsService].
 final biometricsServiceProvider = Provider<BiometricsService>((ref) {
+  // Provide the default instance
   return BiometricsService();
 }); 

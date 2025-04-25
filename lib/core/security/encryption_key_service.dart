@@ -6,10 +6,16 @@ import 'dart:convert'; // For encoding
 // TODO: Consider using PBKDF2 derivation from PIN as per plan.md
 
 class EncryptionKeyService {
-  // Use const for FlutterSecureStorage instance
-  final _storage = const FlutterSecureStorage();
+  // Make storage final but not initialized here
+  final FlutterSecureStorage _storage;
+  
   // Define storage key as a constant
   static const _dbKeyStorageKey = 'database_encryption_key';
+
+  // Add a constructor that accepts FlutterSecureStorage
+  // Provide a default instance for normal use
+  EncryptionKeyService({FlutterSecureStorage? storage}) 
+    : _storage = storage ?? const FlutterSecureStorage();
 
   /// Generates a secure random 32-byte (256-bit) key, stores it Base64 encoded
   Future<String> generateAndStoreNewKey() async {
@@ -47,5 +53,6 @@ class EncryptionKeyService {
 
 // Riverpod provider for the service
 final encryptionKeyServiceProvider = Provider<EncryptionKeyService>((ref) {
+  // Provide the default instance when creating through Riverpod
   return EncryptionKeyService();
 }); 
