@@ -30,21 +30,25 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
   void initState() {
     super.initState();
     print('[LockScreen initState] Called');
-    // Register observer
     WidgetsBinding.instance.addObserver(this);
-    // It's possible initState runs before the first didChangeAppLifecycleState
-    // on hot restart/reload, so get the current state if possible.
-    // Using SchedulerBindingPhase to avoid issues during build.
     if (WidgetsBinding.instance.lifecycleState != null) {
       _appLifecycleState = WidgetsBinding.instance.lifecycleState;
       print('[LockScreen initState] Initial Lifecycle State: $_appLifecycleState');
+      // Attempt initial auth only if starting in resumed state
+      if (_appLifecycleState == AppLifecycleState.resumed) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) { // Check mount status inside callback
+             print('[LockScreen initState] Post-frame check, calling _authenticate.');
+            _authenticate();
+          }
+        });
+      }
     }
   }
 
   @override
   void dispose() {
     print('[LockScreen dispose] Called');
-    // Unregister observer
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -53,40 +57,50 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     print('[LockScreen didChangeAppLifecycleState] State: $state');
-    setState(() {
-      _appLifecycleState = state;
-    });
-    // Optional: If resuming and locked, maybe trigger auth explicitly?
-    // Needs careful consideration to avoid double triggers.
-    // if (state == AppLifecycleState.resumed) {
-    //   final isLocked = ref.read(appLockStateProvider);
-    //   if (isLocked) {
-    //      print('[LockScreen didChangeAppLifecycleState] Resumed while locked, queueing auth check.');
-    //      // Use postFrameCallback to ensure build is complete
-    //      WidgetsBinding.instance.addPostFrameCallback((_) {
-    //         if(mounted && _appLifecycleState == AppLifecycleState.resumed && !_isAuthenticating) {
-    //            print('[LockScreen didChangeAppLifecycleState] Post-frame check, calling authenticate.');
-    //            _authenticate();
-    //         }
-    //      });
-    //   }
-    // }
+    final previousState = _appLifecycleState;
+    _appLifecycleState = state; // Update state first
+    // Trigger auth only when resuming, if locked, and not already authenticating
+    if (state == AppLifecycleState.resumed && previousState != AppLifecycleState.resumed) {
+       // Check lock state from provider
+      final isLocked = ref.read(appLockStateProvider);
+      print('[LockScreen didChangeAppLifecycleState] Resumed. isLocked: $isLocked, isAuthenticating: $_isAuthenticating');
+      if (isLocked && !_isAuthenticating) {
+        print('[LockScreen didChangeAppLifecycleState] Triggering authenticate on resume.');
+        _authenticate();
+      }
+    }
+    // No need for setState here unless UI depends directly on _appLifecycleState
+    // setState(() {
+    //   _appLifecycleState = state;
+    // });
   }
 
   Future<void> _authenticate() async {
-    // Check lifecycle state *before* proceeding
+    // --- IMMEDIATE GUARD --- 
+    // Prevent reentry if already authenticating or widget is disposed
+    if (!mounted || _isAuthenticating) {
+      print('[LockScreen _authenticate] Skipped: Already authenticating or unmounted.');
+      return;
+    }
+    // Set flag *immediately* after the guard
+    _isAuthenticating = true; 
+    // --- END IMMEDIATE GUARD ---
+
+    // Check lifecycle state *before* proceeding further
     if (_appLifecycleState != AppLifecycleState.resumed) {
       print('[LockScreen _authenticate] Skipped: App not resumed ($_appLifecycleState).');
+       _isAuthenticating = false; // Reset flag if skipping
       return;
     }
     // Reset the build trigger flag at the start of authentication attempt
-    _authTriggeredThisBuild = false;
-    if (!mounted || _isAuthenticating) return;
-    print('[LockScreen _authenticate] Called. _isAuthenticating: $_isAuthenticating');
-    if (_isAuthenticating) return;
+    // _authTriggeredThisBuild = false; // REMOVED (Not needed anymore)
+    // if (!mounted || _isAuthenticating) return; // MOVED TO TOP
+    print('[LockScreen _authenticate] Called.'); // Simplified log
+    // if (_isAuthenticating) return; // MOVED TO TOP
 
+    // Update status *after* confirming we are proceeding
     setState(() {
-      _isAuthenticating = true;
+      // _isAuthenticating = true; // MOVED TO TOP
       _status = 'Authenticating...';
     });
 
@@ -139,8 +153,10 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
       setState(() => _status = 'Error: ${e.message ?? "Unknown error"}');
       // Handle specific errors like lockout if needed
     } finally {
-      print('[LockScreen _authenticate] Finally block. Mounted: $mounted');
-      if (mounted && !authenticated) {
+      print('[LockScreen _authenticate] Finally block. Mounted: $mounted, Authenticated: $authenticated');
+      // Only reset the flag if mounted and authentication didn't succeed
+      // If successful, the widget will be disposed anyway.
+      if (mounted && !authenticated) { 
         setState(() => _isAuthenticating = false);
       }
     }
@@ -148,26 +164,26 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
-    print('[LockScreen build] Called. Lifecycle: $_appLifecycleState');
-    _authTriggeredThisBuild = false; // Reset flag at the start of each build
+    print('[LockScreen build] Called. Status: $_status, isAuthenticating: $_isAuthenticating');
+    // _authTriggeredThisBuild = false; // REMOVED
 
-    // Check if currently locked and auth hasn't been triggered *this build*
-    final isLocked = ref.watch(appLockStateProvider);
-    print('[LockScreen build] isLocked: $isLocked, _authTriggeredThisBuild: $_authTriggeredThisBuild');
-    if (isLocked && !_authTriggeredThisBuild) {
-      _authTriggeredThisBuild = true;
-      print('[LockScreen build] Triggering auth via post-frame callback');
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-         print('[LockScreen build] PostFrameCallback running. Lifecycle: $_appLifecycleState');
-         // Check mount status and lifecycle state again inside the callback
-         if(mounted && _appLifecycleState == AppLifecycleState.resumed) {
-           print('[LockScreen build] PostFrameCallback: Conditions met, calling _authenticate.');
-           _authenticate();
-         } else {
-            print('[LockScreen build] PostFrameCallback: Widget unmounted or app not resumed, skipping auth.');
-         }
-      });
-    }
+    // REMOVE AUTH TRIGGER LOGIC FROM BUILD
+    // final isLocked = ref.watch(appLockStateProvider);
+    // print('[LockScreen build] isLocked: $isLocked, _authTriggeredThisBuild: $_authTriggeredThisBuild');
+    // if (isLocked && !_authTriggeredThisBuild) {
+    //   _authTriggeredThisBuild = true;
+    //   print('[LockScreen build] Triggering auth via post-frame callback');
+    //   WidgetsBinding.instance.addPostFrameCallback((_) {
+    //      print('[LockScreen build] PostFrameCallback running. Lifecycle: $_appLifecycleState');
+    //      // Check mount status and lifecycle state again inside the callback
+    //      if(mounted && _appLifecycleState == AppLifecycleState.resumed) {
+    //        print('[LockScreen build] PostFrameCallback: Conditions met, calling _authenticate.');
+    //        _authenticate();
+    //      } else {
+    //         print('[LockScreen build] PostFrameCallback: Widget unmounted or app not resumed, skipping auth.');
+    //      }
+    //   });
+    // }
 
     return Scaffold(
       appBar: AppBar(
@@ -177,11 +193,16 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(_status),
+            // Add Semantics for live updates
+            Semantics(
+              liveRegion: true, // Announce changes to screen readers
+              child: Text(_status),
+            ),
             const SizedBox(height: 30),
             ElevatedButton.icon(
               icon: const Icon(Icons.fingerprint),
-              label: const Text('Authenticate'),
+              // Add Semantics label to the button text for clarity
+              label: const Text('Authenticate with biometrics'), 
               onPressed: _isAuthenticating ? null : _authenticate, // Disable button while authenticating
             ),
             // TODO: Add button/link to trigger PIN entry

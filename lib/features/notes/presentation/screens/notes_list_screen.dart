@@ -35,22 +35,28 @@ class NotesListScreen extends ConsumerWidget {
             itemCount: notes.length,
             itemBuilder: (context, index) {
               final note = notes[index];
-              return ListTile(
-                title: Text(note.title.isNotEmpty ? note.title : 'Untitled Note'),
-                subtitle: Text(
-                  note.body,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              // Add Semantics for better screen reader support
+              return Semantics(
+                button: true, // Indicate it acts like a button
+                label: 'View or edit note: ${note.title.isNotEmpty ? note.title : 'Untitled Note'}', // Describe action and content
+                excludeSemantics: true, // Prevent child text being read separately
+                child: ListTile(
+                  title: Text(note.title.isNotEmpty ? note.title : 'Untitled Note'),
+                  subtitle: Text(
+                    note.body,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  // Navigate to editor on tap
+                  onTap: () {
+                    // Use goNamed for type safety and clarity
+                    GoRouter.of(context).goNamed(
+                      NoteEditorScreen.routeName,
+                      pathParameters: {'id': note.id.toString()}, // Pass note ID as string
+                    );
+                  },
+                  // TODO: Add long-press for delete/multi-select?
                 ),
-                // Navigate to editor on tap
-                onTap: () {
-                  // Use goNamed for type safety and clarity
-                  GoRouter.of(context).goNamed(
-                    NoteEditorScreen.routeName,
-                    pathParameters: {'id': note.id.toString()}, // Pass note ID as string
-                  );
-                },
-                // TODO: Add long-press for delete/multi-select?
               );
             },
           );
