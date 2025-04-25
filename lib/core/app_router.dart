@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:animations/animations.dart'; // Import animations package
 
 // Import screens
 import 'package:lockpaper/features/notes/presentation/screens/notes_list_screen.dart';
@@ -22,12 +23,25 @@ class AppRouter {
           GoRoute(
             path: 'note/:id', // Path param: integer ID or 'new'
             name: NoteEditorScreen.routeName,
-            builder: (BuildContext context, GoRouterState state) {
+            // Use pageBuilder for custom transitions
+            pageBuilder: (BuildContext context, GoRouterState state) {
               final noteIdParam = state.pathParameters['id']!;
-              // Pass the note ID (as int?) or null if 'new'
               final int? noteId = noteIdParam == 'new' ? null : int.tryParse(noteIdParam);
-              // TODO: Add error handling if ID is not 'new' and not a valid int
-              return NoteEditorScreen(noteId: noteId);
+
+              return CustomTransitionPage(
+                key: state.pageKey,
+                child: NoteEditorScreen(noteId: noteId),
+                transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                  // Use FadeThroughTransition
+                  return FadeThroughTransition(
+                    animation: animation,
+                    secondaryAnimation: secondaryAnimation,
+                    child: child,
+                  );
+                },
+                // Optional: Adjust transition duration
+                // transitionDuration: const Duration(milliseconds: 300),
+              );
             },
           ),
         ],

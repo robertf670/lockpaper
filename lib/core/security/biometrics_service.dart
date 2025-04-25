@@ -45,7 +45,7 @@ class BiometricsService {
         //   ),
         // ],
         options: const AuthenticationOptions(
-          stickyAuth: true, // Keep auth prompt visible if app goes to background
+          stickyAuth: false, // Changed to false
           biometricOnly: false, // Allow device credentials (PIN/Pattern/Password) as fallback
         ),
       );

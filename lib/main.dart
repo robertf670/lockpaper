@@ -20,6 +20,7 @@ class MyApp extends ConsumerStatefulWidget {
 class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   // Flag to ignore the very first resume event on launch
   bool _initialResumeProcessed = false;
+  bool _isUnlocking = false; // Flag for grace period during unlock
 
   @override
   void initState() {
@@ -44,16 +45,16 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
       ref.read(appLockStateProvider.notifier).state = true;
     }
 
-    // Remove resume-based locking logic
-    /*
     if (state == AppLifecycleState.resumed) {
       if (!_initialResumeProcessed) {
         _initialResumeProcessed = true;
       } else {
-        ref.read(appLockStateProvider.notifier).state = true;
+        // Only re-lock if not currently in the unlock grace period
+        if (!_isUnlocking) {
+          ref.read(appLockStateProvider.notifier).state = true;
+        }
       }
     }
-    */
   }
 
   @override
@@ -69,7 +70,14 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
         debugShowCheckedModeBanner: false,
         home: LockScreen(
           onUnlocked: () {
+            // Set grace period flag, unlock, then reset flag
+            setState(() { _isUnlocking = true; });
             ref.read(appLockStateProvider.notifier).state = false;
+            Future.delayed(const Duration(milliseconds: 100), () {
+               if (mounted) { // Check if still mounted before resetting flag
+                 setState(() { _isUnlocking = false; });
+               }
+            });
           },
         ),
       );
