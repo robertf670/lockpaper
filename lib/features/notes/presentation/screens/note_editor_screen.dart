@@ -21,11 +21,9 @@ class NoteEditorScreen extends ConsumerStatefulWidget {
 }
 
 class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
-  // Add TextEditingControllers
   late final TextEditingController _titleController;
   late final TextEditingController _bodyController;
-  // Flag to prevent controllers being updated multiple times by the listener
-  bool _isDataLoaded = false;
+  bool _didLoadInitialData = false;
 
   // TODO: Load existing note data if widget.noteId is not null
   // TODO: Implement delete logic
@@ -33,10 +31,8 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialize controllers
     _titleController = TextEditingController();
     _bodyController = TextEditingController();
-    // Data loading is handled by the listener below
   }
 
   @override
@@ -119,31 +115,21 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   Widget build(BuildContext context) {
     final isNewNote = widget.noteId == null;
 
-    // Listen to the single note provider if editing
-    if (!isNewNote) {
-      ref.listen<AsyncValue<Note?>>(noteByIdStreamProvider(widget.noteId!), (previous, next) {
-        final note = next.value;
-        // Update controllers only once when data is loaded
-        if (note != null && !_isDataLoaded) {
-          _titleController.text = note.title;
-          _bodyController.text = note.body;
-          _isDataLoaded = true; // Mark data as loaded
-        }
-        // TODO: Handle cases where the note is not found or stream gives an error?
-      });
-    }
+    // Watch the provider if editing, otherwise use a placeholder value
+    final noteAsyncValue = isNewNote
+        ? const AsyncData<Note?>(null) // Provide a default AsyncData state for new notes
+        : ref.watch(noteByIdStreamProvider(widget.noteId!));
 
     return Scaffold(
       appBar: AppBar(
         title: Text(isNewNote ? 'New Note' : 'Edit Note'),
-        actions: [
-          // TODO: Add Save button
+        // Show actions only when data is loaded or when creating a new note
+        actions: (isNewNote || noteAsyncValue.hasValue) ? [
           IconButton(
             icon: const Icon(Icons.save_alt_outlined),
             tooltip: 'Save Note',
             onPressed: _saveNote, // Call save method
           ),
-          // TODO: Add Delete button only when editing
           if (!isNewNote)
             IconButton(
               icon: const Icon(Icons.delete_outline),
@@ -152,32 +138,54 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                 // TODO: Implement delete logic
               },
             ),
-        ],
+        ] : [], // Hide actions while loading/error
       ),
-      body: Padding( // Changed to non-const
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              decoration: const InputDecoration(hintText: 'Title'),
-              controller: _titleController, // Connect controller
-              textCapitalization: TextCapitalization.sentences,
-            ),
-            const SizedBox(height: 8),
-            Expanded(
-              child: TextField(
-                decoration: const InputDecoration(
-                  hintText: 'Note content...',
-                  border: InputBorder.none,
-                ),
-                maxLines: null,
-                expands: true,
-                controller: _bodyController, // Connect controller
-                textCapitalization: TextCapitalization.sentences,
-              ),
-            ),
-          ],
+      // Use .when on the AsyncValue to handle states
+      body: noteAsyncValue.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Text('Error loading note: $error'),
         ),
+        data: (note) {
+          // Populate controllers *once* when data arrives for an existing note
+          if (!isNewNote && note != null && !_didLoadInitialData) {
+            _titleController.text = note.title;
+            _bodyController.text = note.body;
+            // Use WidgetsBinding to delay setting the flag until after this build
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                 _didLoadInitialData = true;
+              }
+            });
+          }
+
+          // Always return the editor fields layout
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                TextField(
+                  decoration: const InputDecoration(hintText: 'Title'),
+                  controller: _titleController,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Note content...',
+                      border: InputBorder.none,
+                    ),
+                    maxLines: null,
+                    expands: true,
+                    controller: _bodyController,
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
