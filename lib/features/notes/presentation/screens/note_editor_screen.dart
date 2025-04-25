@@ -179,83 +179,86 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
         ? const AsyncData<Note?>(null) // Provide a default AsyncData state for new notes
         : ref.watch(noteByIdStreamProvider(widget.noteId!));
 
-    // Remove the outer Hero widget
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isNewNote ? 'New Note' : 'Edit Note'),
-        // Show actions only when data is loaded or when creating a new note
-        actions: (isNewNote || noteAsyncValue.hasValue) ? [
-          IconButton(
-            icon: const Icon(Icons.save_alt_outlined),
-            tooltip: 'Save Note',
-            onPressed: _saveNote, // Call save method
-          ),
-          if (!isNewNote)
-            IconButton(
-              icon: const Icon(Icons.delete_outline),
-              tooltip: 'Delete Note',
-              onPressed: _deleteNote, // Call delete method
-            ),
-        ] : [], // Hide actions while loading/error
-      ),
-      // Use .when on the AsyncValue to handle states
-      body: noteAsyncValue.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Text('Error loading note: $error'),
-        ),
-        data: (note) {
-          // Populate controllers *once* when data arrives for an existing note
-          if (!isNewNote && note != null && !_didLoadInitialData) {
-            _titleController.text = note.title;
-            _bodyController.text = note.body;
-            // Use WidgetsBinding to delay setting the flag until after this build
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) {
-                 _didLoadInitialData = true;
-              }
-            });
-          }
+    // Populate controllers *once* when data arrives for an existing note
+    if (!isNewNote && noteAsyncValue.hasValue) {
+      _titleController.text = noteAsyncValue.value!.title;
+      _bodyController.text = noteAsyncValue.value!.body;
+      // Use WidgetsBinding to delay setting the flag until after this build
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+           _didLoadInitialData = true;
+        }
+      });
+    }
 
-          // Wrap the content in a SingleChildScrollView to prevent overflow
-          return SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                // Ensure Column doesn't try to expand infinitely vertically
-                // when inside a SingleChildScrollView.
-                // We rely on the Expanded TextField to fill the space.
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    decoration: const InputDecoration(hintText: 'Title'),
-                    controller: _titleController,
-                    textCapitalization: TextCapitalization.sentences,
-                  ),
-                  const SizedBox(height: 8),
-                  // Need to constrain the height of the Expanded TextField
-                  // inside a SingleChildScrollView.
-                  // Let's give it a reasonable initial height, but it can grow.
-                  SizedBox(
-                    // Adjust height as needed, or use MediaQuery
-                    height: MediaQuery.of(context).size.height * 0.5,
-                    child: TextField(
-                      decoration: const InputDecoration(
-                        hintText: 'Note content...',
-                        border: InputBorder.none,
-                      ),
-                      maxLines: null,
-                      expands: true,
-                      controller: _bodyController,
-                      textCapitalization: TextCapitalization.sentences,
-                      textAlignVertical: TextAlignVertical.top,
-                    ),
-                  ),
-                ],
-              ),
+    // Wrap the Scaffold with the Hero widget
+    return Hero(
+      tag: 'fab', // Use the SAME tag as the FAB
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isNewNote ? 'New Note' : 'Edit Note'),
+          // Show actions only when data is loaded or when creating a new note
+          actions: (isNewNote || noteAsyncValue.hasValue) ? [
+            IconButton(
+              icon: const Icon(Icons.save_alt_outlined),
+              tooltip: 'Save Note',
+              onPressed: _saveNote, // Call save method
             ),
-          );
-        },
+            if (!isNewNote)
+              IconButton(
+                icon: const Icon(Icons.delete_outline),
+                tooltip: 'Delete Note',
+                onPressed: _deleteNote, // Call delete method
+              ),
+          ] : [], // Hide actions while loading/error
+        ),
+        // Use .when on the AsyncValue to handle states
+        body: noteAsyncValue.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => Center(
+            child: Text('Error loading note: $error'),
+          ),
+          data: (note) {
+            // Wrap the content in a SingleChildScrollView to prevent overflow
+            return SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  // Ensure Column doesn't try to expand infinitely vertically
+                  // when inside a SingleChildScrollView.
+                  // We rely on the Expanded TextField to fill the space.
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      decoration: const InputDecoration(hintText: 'Title'),
+                      controller: _titleController,
+                      textCapitalization: TextCapitalization.sentences,
+                    ),
+                    const SizedBox(height: 8),
+                    // Need to constrain the height of the Expanded TextField
+                    // inside a SingleChildScrollView.
+                    // Let's give it a reasonable initial height, but it can grow.
+                    SizedBox(
+                      // Adjust height as needed, or use MediaQuery
+                      height: MediaQuery.of(context).size.height * 0.5,
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          hintText: 'Note content...',
+                          border: InputBorder.none,
+                        ),
+                        maxLines: null,
+                        expands: true,
+                        controller: _bodyController,
+                        textCapitalization: TextCapitalization.sentences,
+                        textAlignVertical: TextAlignVertical.top,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

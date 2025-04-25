@@ -64,16 +64,19 @@ class NotesListScreen extends ConsumerWidget {
           child: CircularProgressIndicator(),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        heroTag: null, // Keep default tag disabled
-        onPressed: () {
-          GoRouter.of(context).goNamed(
-            NoteEditorScreen.routeName,
-            pathParameters: {'id': 'new'}, // Pass 'new' for creating
-          );
-        },
-        tooltip: 'Create Note',
-        child: const Icon(Icons.add),
+      floatingActionButton: Hero(
+        tag: 'fab', // Add the Hero tag
+        child: FloatingActionButton(
+          heroTag: null, // Re-enable this to disable the FAB's default Hero
+          onPressed: () {
+            GoRouter.of(context).goNamed(
+              NoteEditorScreen.routeName,
+              pathParameters: {'id': 'new'}, // Pass 'new' for creating
+            );
+          },
+          tooltip: 'Create Note',
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
