@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockpaper/core/security/biometrics_service.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:lockpaper/core/application/app_lock_provider.dart';
+import 'package:lockpaper/core/security/encryption_key_service.dart';
+import 'package:lockpaper/features/notes/data/app_database.dart';
 
 /// A screen that requires biometric/device authentication to proceed.
 class LockScreen extends ConsumerStatefulWidget {
@@ -89,6 +91,7 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
     });
 
     final biometricsService = ref.read(biometricsServiceProvider);
+    final keyService = ref.read(encryptionKeyServiceProvider);
     bool authenticated = false;
     try {
       final bool canAuth = await biometricsService.canAuthenticate;
@@ -102,7 +105,28 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
         authenticated = await biometricsService.authenticate('Please authenticate to access your notes');
         print('[LockScreen _authenticate] authenticate result: $authenticated');
         if (authenticated) {
-          widget.onUnlocked(); // Call the callback on success
+          print('[LockScreen _authenticate] Authentication successful. Handling encryption key...');
+          String? key;
+          final bool keyExists = await keyService.hasStoredKey();
+          if (!keyExists) {
+            print('[LockScreen _authenticate] No key found. Generating and storing new key...');
+            key = await keyService.generateAndStoreNewKey();
+            print('[LockScreen _authenticate] New key generated.');
+          } else {
+            print('[LockScreen _authenticate] Existing key found. Retrieving...');
+            key = await keyService.getDatabaseKey();
+            print('[LockScreen _authenticate] Key retrieved.');
+          }
+
+          if (key != null && key.isNotEmpty) {
+            print('[LockScreen _authenticate] Setting encryption key provider...');
+            ref.read(encryptionKeyProvider.notifier).state = key;
+            print('[LockScreen _authenticate] Key provider set. Calling onUnlocked.');
+            widget.onUnlocked(); // Proceed to unlock the app UI
+          } else {
+            print('[LockScreen _authenticate] Error: Failed to retrieve or generate key.');
+            setState(() => _status = 'Error: Could not access encryption key.');
+          }
         } else {
           setState(() => _status = 'Authentication failed. Try again.');
         }
@@ -116,7 +140,7 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
       // Handle specific errors like lockout if needed
     } finally {
       print('[LockScreen _authenticate] Finally block. Mounted: $mounted');
-      if (mounted) {
+      if (mounted && !authenticated) {
         setState(() => _isAuthenticating = false);
       }
     }

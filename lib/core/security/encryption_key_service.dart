@@ -1,0 +1,51 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'dart:math'; // For random key generation
+import 'dart:convert'; // For encoding
+
+// TODO: Consider using PBKDF2 derivation from PIN as per plan.md
+
+class EncryptionKeyService {
+  // Use const for FlutterSecureStorage instance
+  final _storage = const FlutterSecureStorage();
+  // Define storage key as a constant
+  static const _dbKeyStorageKey = 'database_encryption_key';
+
+  /// Generates a secure random 32-byte (256-bit) key, stores it Base64 encoded
+  Future<String> generateAndStoreNewKey() async {
+    final random = Random.secure();
+    // Generate 32 random bytes for a 256-bit key
+    final keyBytes = List<int>.generate(32, (_) => random.nextInt(256));
+    // Use URL-safe Base64 encoding suitable for storage
+    final base64Key = base64UrlEncode(keyBytes);
+    await _storage.write(key: _dbKeyStorageKey, value: base64Key);
+    print('Generated and stored new key.'); // Added print for testing
+    return base64Key;
+  }
+
+  /// Retrieves the stored database key.
+  Future<String?> getDatabaseKey() async {
+    final key = await _storage.read(key: _dbKeyStorageKey);
+    print('Retrieved key: ${key != null ? 'found' : 'not found'}'); // Added print
+    return key;
+  }
+
+  /// Checks if an encryption key is stored.
+  Future<bool> hasStoredKey() async {
+    final key = await _storage.read(key: _dbKeyStorageKey);
+    final exists = key != null && key.isNotEmpty;
+    print('Checked for key, exists: $exists'); // Added print
+    return exists;
+  }
+
+  /// Deletes the stored database key.
+   Future<void> deleteDatabaseKey() async {
+    await _storage.delete(key: _dbKeyStorageKey);
+    print('Deleted stored key.'); // Added print
+  }
+}
+
+// Riverpod provider for the service
+final encryptionKeyServiceProvider = Provider<EncryptionKeyService>((ref) {
+  return EncryptionKeyService();
+}); 

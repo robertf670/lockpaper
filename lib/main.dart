@@ -1,12 +1,37 @@
+import 'dart:io'; // Needed for Platform
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockpaper/core/app_router.dart';
 import 'package:lockpaper/core/app_theme.dart';
 import 'package:lockpaper/core/application/app_lock_provider.dart';
 import 'package:lockpaper/core/presentation/screens/lock_screen.dart';
+import 'package:sqlite3/open.dart'; // Needed for open.overrideFor
+import 'package:sqlite3/sqlite3.dart'; // Import sqlite3 for tempDirectory
+import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart'; // Needed for openCipherOnAndroid and workaround
+import 'package:path_provider/path_provider.dart'; // Import for temp dir
 
-void main() {
+void main() async {
+  // Ensure initialization FIRST
   WidgetsFlutterBinding.ensureInitialized();
+
+  // // Set temp directory for sqlite3 *before* override (might help) - REMOVED
+  // final cachebase = (await getTemporaryDirectory()).path;
+  // sqlite3.tempDirectory = cachebase;
+  // print("Set sqlite3.tempDirectory to: $cachebase");
+
+  // Tell sqlite3 package how to load SQLCipher on Android
+  if (Platform.isAndroid) {
+    print("Applying Android SQLCipher workaround and override...");
+    await applyWorkaroundToOpenSqlCipherOnOldAndroidVersions(); 
+    open.overrideFor(OperatingSystem.android, openCipherOnAndroid);
+    print("Android SQLCipher override applied.");
+  }
+  // Add overrides for other platforms if necessary, e.g.:
+  // if (Platform.isIOS || Platform.isMacOS) { 
+  //   open.overrideFor(Platform.operatingSystem, () => DynamicLibrary.process());
+  // }
+
+  print("Running app...");
   runApp(const ProviderScope(child: MyApp()));
 }
 

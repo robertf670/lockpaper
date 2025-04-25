@@ -42,8 +42,11 @@ dependencies:
 
   # Database
   drift: ^2.26.0
-  sqlite3_flutter_libs: ^0.5.32
-  sqflite_sqlcipher: ^3.1.0+1
+  sqlcipher_flutter_libs: ^0.6.5 # Provides SQLCipher native libs
+  sqlite3: ^2.7.5 # Drift uses this for native access
+  path_provider: ^2.1.5 # For finding DB path
+  path: ^1.9.0 # For joining paths
+  
 
   # Security
   local_auth: ^2.3.0

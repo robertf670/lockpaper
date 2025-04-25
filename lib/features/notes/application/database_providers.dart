@@ -1,34 +1,21 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockpaper/features/notes/data/app_database.dart';
 
-/// Provider for the singleton instance of the [AppDatabase].
-///
-/// This provider ensures that the database is created only once.
-final databaseProvider = Provider<AppDatabase>((ref) {
-  // Note: It's crucial that AppDatabase handles its own opening logic
-  // (e.g., via LazyDatabase) to avoid re-creating connections.
-  return AppDatabase();
-
-  // Ensure the database is closed when the provider is disposed.
-  // ref.onDispose(() => ref.state.close()); // Error: ref.state doesn't exist here
-  // Correction: Access the created instance directly
-  // ref.onDispose(() => appDatabase.close()); // Needs instance
-  // Let's create the instance first:
-  // final appDatabase = AppDatabase();
-  // ref.onDispose(() => appDatabase.close());
-  // return appDatabase;
-  // Simpler: Riverpod handles disposal automatically for Provider if the
-  // created object doesn't have a specific dispose/close method called out.
-  // If explicit closing is needed later (e.g. due to SQLCipher needing explicit handling),
-  // we can revisit this.
-});
-
 /// Provider for the [NoteDao].
 ///
-/// Depends on [databaseProvider] to get the database instance.
+/// Depends on [appDatabaseProvider] (from app_database.dart) to get the database instance.
 final noteDaoProvider = Provider<NoteDao>((ref) {
-  final database = ref.watch(databaseProvider);
-  return database.noteDao;
+  // Watch the correct provider (which might be in loading/error state initially)
+  // Handle potential error state when watching the provider
+  try {
+    final database = ref.watch(appDatabaseProvider);
+    return database.noteDao;
+  } catch (e, stackTrace) {
+    // Log the error or handle it appropriately
+    print('Error accessing appDatabaseProvider in noteDaoProvider: $e\n$stackTrace');
+    // Depending on UI needs, might rethrow or return a dummy/error state DAO
+    rethrow; // Rethrow for now to make the error visible
+  }
 });
 
 /// StreamProvider that watches all notes from the database.
@@ -36,14 +23,28 @@ final noteDaoProvider = Provider<NoteDao>((ref) {
 /// It uses the [noteDaoProvider] to get the DAO instance and calls
 /// `watchAllNotes()` to get the stream.
 final allNotesStreamProvider = StreamProvider<List<Note>>((ref) {
-  final dao = ref.watch(noteDaoProvider);
-  return dao.watchAllNotes();
+  // Handle potential error when watching noteDaoProvider
+  try {
+    final dao = ref.watch(noteDaoProvider);
+    return dao.watchAllNotes();
+  } catch (e, stackTrace) {
+    print('Error accessing noteDaoProvider in allNotesStreamProvider: $e\n$stackTrace');
+    // Return an empty stream or a stream with an error
+    return Stream.error(e, stackTrace);
+  }
 });
 
 /// Family StreamProvider that watches a single note by its ID.
 ///
 /// Accepts the note ID as an argument.
 final noteByIdStreamProvider = StreamProvider.family<Note?, int>((ref, noteId) {
-  final dao = ref.watch(noteDaoProvider);
-  return dao.watchNoteById(noteId);
+  // Handle potential error when watching noteDaoProvider
+  try {
+    final dao = ref.watch(noteDaoProvider);
+    return dao.watchNoteById(noteId);
+  } catch (e, stackTrace) {
+     print('Error accessing noteDaoProvider in noteByIdStreamProvider: $e\n$stackTrace');
+    // Return an empty stream or a stream with an error
+    return Stream.error(e, stackTrace);
+  }
 }); 
