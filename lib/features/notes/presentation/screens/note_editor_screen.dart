@@ -179,6 +179,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
         ? const AsyncData<Note?>(null) // Provide a default AsyncData state for new notes
         : ref.watch(noteByIdStreamProvider(widget.noteId!));
 
+    // Remove the outer Hero widget
     return Scaffold(
       appBar: AppBar(
         title: Text(isNewNote ? 'New Note' : 'Edit Note'),
@@ -216,30 +217,42 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             });
           }
 
-          // Always return the editor fields layout
-          return Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              children: [
-                TextField(
-                  decoration: const InputDecoration(hintText: 'Title'),
-                  controller: _titleController,
-                  textCapitalization: TextCapitalization.sentences,
-                ),
-                const SizedBox(height: 8),
-                Expanded(
-                  child: TextField(
-                    decoration: const InputDecoration(
-                      hintText: 'Note content...',
-                      border: InputBorder.none,
-                    ),
-                    maxLines: null,
-                    expands: true,
-                    controller: _bodyController,
+          // Wrap the content in a SingleChildScrollView to prevent overflow
+          return SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                // Ensure Column doesn't try to expand infinitely vertically
+                // when inside a SingleChildScrollView.
+                // We rely on the Expanded TextField to fill the space.
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    decoration: const InputDecoration(hintText: 'Title'),
+                    controller: _titleController,
                     textCapitalization: TextCapitalization.sentences,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  // Need to constrain the height of the Expanded TextField
+                  // inside a SingleChildScrollView.
+                  // Let's give it a reasonable initial height, but it can grow.
+                  SizedBox(
+                    // Adjust height as needed, or use MediaQuery
+                    height: MediaQuery.of(context).size.height * 0.5,
+                    child: TextField(
+                      decoration: const InputDecoration(
+                        hintText: 'Note content...',
+                        border: InputBorder.none,
+                      ),
+                      maxLines: null,
+                      expands: true,
+                      controller: _bodyController,
+                      textCapitalization: TextCapitalization.sentences,
+                      textAlignVertical: TextAlignVertical.top,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },

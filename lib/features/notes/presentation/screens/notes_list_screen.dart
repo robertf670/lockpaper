@@ -65,7 +65,7 @@ class NotesListScreen extends ConsumerWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        // Navigate to editor for a new note
+        heroTag: null, // Keep default tag disabled
         onPressed: () {
           GoRouter.of(context).goNamed(
             NoteEditorScreen.routeName,
