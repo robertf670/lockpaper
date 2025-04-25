@@ -24,6 +24,8 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   // Add TextEditingControllers
   late final TextEditingController _titleController;
   late final TextEditingController _bodyController;
+  // Flag to prevent controllers being updated multiple times by the listener
+  bool _isDataLoaded = false;
 
   // TODO: Load existing note data if widget.noteId is not null
   // TODO: Implement delete logic
@@ -34,8 +36,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     // Initialize controllers
     _titleController = TextEditingController();
     _bodyController = TextEditingController();
-    // TODO: Load initial data if editing
-    // if (widget.noteId != null) { _loadNoteData(); }
+    // Data loading is handled by the listener below
   }
 
   @override
@@ -117,6 +118,20 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final isNewNote = widget.noteId == null;
+
+    // Listen to the single note provider if editing
+    if (!isNewNote) {
+      ref.listen<AsyncValue<Note?>>(noteByIdStreamProvider(widget.noteId!), (previous, next) {
+        final note = next.value;
+        // Update controllers only once when data is loaded
+        if (note != null && !_isDataLoaded) {
+          _titleController.text = note.title;
+          _bodyController.text = note.body;
+          _isDataLoaded = true; // Mark data as loaded
+        }
+        // TODO: Handle cases where the note is not found or stream gives an error?
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(

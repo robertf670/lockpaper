@@ -38,4 +38,12 @@ final noteDaoProvider = Provider<NoteDao>((ref) {
 final allNotesStreamProvider = StreamProvider<List<Note>>((ref) {
   final dao = ref.watch(noteDaoProvider);
   return dao.watchAllNotes();
+});
+
+/// Family StreamProvider that watches a single note by its ID.
+///
+/// Accepts the note ID as an argument.
+final noteByIdStreamProvider = StreamProvider.family<Note?, int>((ref, noteId) {
+  final dao = ref.watch(noteDaoProvider);
+  return dao.watchNoteById(noteId);
 }); 
