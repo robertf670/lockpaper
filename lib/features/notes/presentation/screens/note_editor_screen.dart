@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart'; // Import for navigation
+import 'package:drift/drift.dart' as drift; // Import drift for Companion
+import 'package:lockpaper/features/notes/application/database_providers.dart'; // Import providers
+import 'package:lockpaper/features/notes/data/app_database.dart'; // Import Note
+import 'package:lockpaper/features/notes/presentation/screens/notes_list_screen.dart'; // Import NotesListScreen for navigation fallback
 
 /// Screen for creating or editing a note.
 class NoteEditorScreen extends ConsumerStatefulWidget {
@@ -16,21 +21,98 @@ class NoteEditorScreen extends ConsumerStatefulWidget {
 }
 
 class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
-  // TODO: Add TextEditingControllers for title and body
+  // Add TextEditingControllers
+  late final TextEditingController _titleController;
+  late final TextEditingController _bodyController;
+
   // TODO: Load existing note data if widget.noteId is not null
-  // TODO: Implement save/delete logic
+  // TODO: Implement delete logic
 
   @override
   void initState() {
     super.initState();
-    // TODO: Initialize controllers and load data
+    // Initialize controllers
+    _titleController = TextEditingController();
+    _bodyController = TextEditingController();
+    // TODO: Load initial data if editing
+    // if (widget.noteId != null) { _loadNoteData(); }
   }
 
   @override
   void dispose() {
-    // TODO: Dispose controllers
+    // Dispose controllers
+    _titleController.dispose();
+    _bodyController.dispose();
     super.dispose();
   }
+
+  // --- Methods ---
+
+  Future<void> _saveNote() async {
+    final dao = ref.read(noteDaoProvider);
+    final navigator = GoRouter.of(context); // Use GoRouter for navigation
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+    final title = _titleController.text;
+    final body = _bodyController.text;
+
+    // Prevent saving empty notes (optional, adjust as needed)
+    if (title.isEmpty && body.isEmpty) {
+      scaffoldMessenger.showSnackBar(
+        const SnackBar(content: Text('Cannot save an empty note.')),
+      );
+      return;
+    }
+
+    final now = DateTime.now();
+
+    try {
+      if (widget.noteId == null) {
+        // Insert new note
+        final companion = NotesCompanion(
+          title: drift.Value(title),
+          body: drift.Value(body),
+          // createdAt is handled by default
+        );
+        await dao.insertNote(companion);
+        scaffoldMessenger.showSnackBar(
+          const SnackBar(content: Text('Note saved successfully.')),
+        );
+      } else {
+        // Update existing note
+        final companion = NotesCompanion(
+          id: drift.Value(widget.noteId!),
+          title: drift.Value(title),
+          body: drift.Value(body),
+          updatedAt: drift.Value(now), // Set update timestamp
+        );
+        final success = await dao.updateNote(companion);
+        if (success) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('Note updated successfully.')),
+          );
+        } else {
+          // Handle update failure (e.g., note not found, should be rare)
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('Failed to update note.')),
+          );
+        }
+      }
+      // Navigate back to the list screen after saving
+      if (navigator.canPop()) {
+        navigator.pop();
+      } else {
+        // Fallback if cannot pop (e.g., deep link directly to editor)
+        navigator.goNamed(NotesListScreen.routeName);
+      }
+    } catch (e) {
+      scaffoldMessenger.showSnackBar(
+        SnackBar(content: Text('Error saving note: $e')),
+      );
+    }
+  }
+
+  // --- Build Method ---
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +126,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           IconButton(
             icon: const Icon(Icons.save_alt_outlined),
             tooltip: 'Save Note',
-            onPressed: () {
-              // TODO: Implement save logic
-            },
+            onPressed: _saveNote, // Call save method
           ),
           // TODO: Add Delete button only when editing
           if (!isNewNote)
@@ -59,26 +139,26 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             ),
         ],
       ),
-      body: const Padding(
-        padding: EdgeInsets.all(16.0),
+      body: Padding( // Changed to non-const
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            // TODO: Add TextField for title
             TextField(
-              decoration: InputDecoration(hintText: 'Title'),
-              // controller: _titleController,
+              decoration: const InputDecoration(hintText: 'Title'),
+              controller: _titleController, // Connect controller
+              textCapitalization: TextCapitalization.sentences,
             ),
-            SizedBox(height: 8),
-            // TODO: Add Expanded TextField for body
+            const SizedBox(height: 8),
             Expanded(
               child: TextField(
-                decoration: InputDecoration(
+                decoration: const InputDecoration(
                   hintText: 'Note content...',
-                  border: InputBorder.none, // Remove underline
+                  border: InputBorder.none,
                 ),
-                maxLines: null, // Allow multiple lines
-                expands: true, // Fill available space
-                // controller: _bodyController,
+                maxLines: null,
+                expands: true,
+                controller: _bodyController, // Connect controller
+                textCapitalization: TextCapitalization.sentences,
               ),
             ),
           ],
