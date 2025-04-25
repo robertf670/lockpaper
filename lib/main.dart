@@ -9,34 +9,61 @@ import 'package:sqlite3/open.dart'; // Needed for open.overrideFor
 import 'package:sqlite3/sqlite3.dart'; // Import sqlite3 for tempDirectory
 import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart'; // Needed for openCipherOnAndroid and workaround
 import 'package:path_provider/path_provider.dart'; // Import for temp dir
+// Explicitly show CorePalette from dynamic_color
+import 'package:dynamic_color/dynamic_color.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:go_router/go_router.dart';
 
 void main() async {
   // Ensure initialization FIRST
   WidgetsFlutterBinding.ensureInitialized();
 
-  // // Set temp directory for sqlite3 *before* override (might help) - REMOVED
-  // final cachebase = (await getTemporaryDirectory()).path;
-  // sqlite3.tempDirectory = cachebase;
-  // print("Set sqlite3.tempDirectory to: $cachebase");
-
-  // Tell sqlite3 package how to load SQLCipher on Android
+  // Tell sqlite3 package how to load SQLCipher on Android *FIRST*
   if (Platform.isAndroid) {
     print("Applying Android SQLCipher workaround and override...");
     await applyWorkaroundToOpenSqlCipherOnOldAndroidVersions(); 
     open.overrideFor(OperatingSystem.android, openCipherOnAndroid);
     print("Android SQLCipher override applied.");
   }
+
+  // Set temp directory for sqlite3 *after* override
+  final cachebase = (await getTemporaryDirectory()).path;
+  sqlite3.tempDirectory = cachebase;
+  print("Set sqlite3.tempDirectory to: $cachebase");
+
   // Add overrides for other platforms if necessary, e.g.:
   // if (Platform.isIOS || Platform.isMacOS) { 
   //   open.overrideFor(Platform.operatingSystem, () => DynamicLibrary.process());
   // }
 
   print("Running app...");
-  runApp(const ProviderScope(child: MyApp()));
+  // Wrap ProviderScope in DynamicColorBuilder
+  runApp(const DynamicColorApp());
+}
+
+// New wrapper widget to handle DynamicColorBuilder
+class DynamicColorApp extends StatelessWidget {
+  const DynamicColorApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DynamicColorBuilder(
+      builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
+        // Pass the dynamic color schemes down to MyApp
+        return ProviderScope(
+          child: MyApp(lightDynamic: lightDynamic, darkDynamic: darkDynamic),
+        );
+      },
+    );
+  }
 }
 
 class MyApp extends ConsumerStatefulWidget {
-  const MyApp({super.key});
+  // Accept palettes
+  final ColorScheme? lightDynamic;
+  final ColorScheme? darkDynamic;
+  
+  const MyApp({super.key, this.lightDynamic, this.darkDynamic});
 
   @override
   ConsumerState<MyApp> createState() => _MyAppState();
@@ -51,6 +78,10 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (WidgetsBinding.instance.lifecycleState != null) {
+      _appLifecycleState = WidgetsBinding.instance.lifecycleState;
+      print('[MyApp initState] Initial Lifecycle State: $_appLifecycleState');
+    }
   }
 
   @override
@@ -59,9 +90,12 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  AppLifecycleState? _appLifecycleState;
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
+    print('[MyApp didChangeAppLifecycleState] State: $state');
+    _appLifecycleState = state; // Update state here
 
     // Lock the app when it goes into the background (paused or inactive)
     // Only lock if it's currently unlocked.
@@ -86,12 +120,16 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final isLocked = ref.watch(appLockStateProvider);
 
+    // Create themes using palettes from DynamicColorBuilder
+    final lightTheme = AppTheme.getTheme(widget.lightDynamic, Brightness.light);
+    final darkTheme = AppTheme.getTheme(widget.darkDynamic, Brightness.dark);
+
     if (isLocked) {
       return MaterialApp(
         title: 'Lockpaper',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
+        theme: lightTheme, // Use dynamic or fallback theme
+        darkTheme: darkTheme, // Use dynamic or fallback theme
+        themeMode: ThemeMode.system, 
         debugShowCheckedModeBanner: false,
         home: LockScreen(
           onUnlocked: () {
@@ -109,9 +147,9 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     } else {
       return MaterialApp.router(
         title: 'Lockpaper',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.system,
+        theme: lightTheme, // Use dynamic or fallback theme
+        darkTheme: darkTheme, // Use dynamic or fallback theme
+        themeMode: ThemeMode.system, 
         routerConfig: AppRouter.router,
         debugShowCheckedModeBanner: false,
       );

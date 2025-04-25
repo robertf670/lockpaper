@@ -108,14 +108,14 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
           print('[LockScreen _authenticate] Authentication successful. Handling encryption key...');
           String? key;
           final bool keyExists = await keyService.hasStoredKey();
-          if (!keyExists) {
-            print('[LockScreen _authenticate] No key found. Generating and storing new key...');
-            key = await keyService.generateAndStoreNewKey();
-            print('[LockScreen _authenticate] New key generated.');
-          } else {
+          if (keyExists) {
             print('[LockScreen _authenticate] Existing key found. Retrieving...');
             key = await keyService.getDatabaseKey();
             print('[LockScreen _authenticate] Key retrieved.');
+          } else {
+             print('[LockScreen _authenticate] CRITICAL: No encryption key found in storage!');
+             key = null; // Ensure key is null if not found
+             // Keep authenticated = true, but key will be null, leading to error below
           }
 
           if (key != null && key.isNotEmpty) {
