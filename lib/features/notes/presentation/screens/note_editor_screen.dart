@@ -109,6 +109,65 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     }
   }
 
+  Future<void> _deleteNote() async {
+    // Can only delete existing notes
+    if (widget.noteId == null) return;
+
+    final navigator = GoRouter.of(context);
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
+    final dao = ref.read(noteDaoProvider);
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Note?'),
+        content: const Text('Are you sure you want to permanently delete this note?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false), // Not confirmed
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true), // Confirmed
+            child: const Text('Delete'),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+          ),
+        ],
+      ),
+    );
+
+    // If user confirmed deletion
+    if (confirmed == true) {
+      try {
+        // Create a companion with only the ID for deletion
+        final companion = NotesCompanion(id: drift.Value(widget.noteId!));
+        final count = await dao.deleteNote(companion);
+
+        if (count > 0) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('Note deleted successfully.')),
+          );
+          // Navigate back to the list screen
+          if (navigator.canPop()) {
+            navigator.pop();
+          } else {
+            navigator.goNamed(NotesListScreen.routeName);
+          }
+        } else {
+          // Note might have been deleted already
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(content: Text('Note not found for deletion.')),
+          );
+        }
+      } catch (e) {
+        scaffoldMessenger.showSnackBar(
+          SnackBar(content: Text('Error deleting note: $e')),
+        );
+      }
+    }
+  }
+
   // --- Build Method ---
 
   @override
@@ -134,9 +193,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             IconButton(
               icon: const Icon(Icons.delete_outline),
               tooltip: 'Delete Note',
-              onPressed: () {
-                // TODO: Implement delete logic
-              },
+              onPressed: _deleteNote, // Call delete method
             ),
         ] : [], // Hide actions while loading/error
       ),
