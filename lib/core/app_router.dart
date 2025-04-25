@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-// Import the actual screen
+// Import screens
 import 'package:lockpaper/features/notes/presentation/screens/notes_list_screen.dart';
+import 'package:lockpaper/features/notes/presentation/screens/note_editor_screen.dart'; // Import editor
 
 /// Defines the application's routes using GoRouter.
 class AppRouter {
@@ -12,25 +13,24 @@ class AppRouter {
     routes: <RouteBase>[
       GoRoute(
         path: '/',
-        name: 'home', // Give the route a name
+        name: NotesListScreen.routeName, // Use name from screen
         builder: (BuildContext context, GoRouterState state) {
-          // Use the actual NotesListScreen
           return const NotesListScreen();
         },
-        // TODO: Add routes for other screens like NoteEditor
-        // routes: <RouteBase>[
-        //   GoRoute(
-        //     path: 'note/:id', // Path parameter for note ID
-        //     name: 'noteEditor',
-        //     builder: (BuildContext context, GoRouterState state) {
-        //       final noteId = state.pathParameters['id']!;
-        //       // Determine if creating a new note or editing existing
-        //       final isNewNote = noteId == 'new';
-        //       // return NoteEditorScreen(noteId: isNewNote ? null : int.parse(noteId));
-        //       return PlaceholderScreen(title: isNewNote ? 'New Note' : 'Edit Note $noteId'); // Placeholder
-        //     },
-        //   ),
-        // ],
+        // Nested route for the editor
+        routes: <RouteBase>[
+          GoRoute(
+            path: 'note/:id', // Path param: integer ID or 'new'
+            name: NoteEditorScreen.routeName,
+            builder: (BuildContext context, GoRouterState state) {
+              final noteIdParam = state.pathParameters['id']!;
+              // Pass the note ID (as int?) or null if 'new'
+              final int? noteId = noteIdParam == 'new' ? null : int.tryParse(noteIdParam);
+              // TODO: Add error handling if ID is not 'new' and not a valid int
+              return NoteEditorScreen(noteId: noteId);
+            },
+          ),
+        ],
       ),
       // TODO: Add routes for settings, lock screen, etc.
     ],
@@ -42,17 +42,5 @@ class AppRouter {
   AppRouter._();
 }
 
-// Placeholder for screens not yet created (can be removed later)
-// Used in commented-out routes above
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-  const PlaceholderScreen({super.key, required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(child: Text('$title Placeholder')),
-    );
-  }
-} 
+// Remove the generic PlaceholderScreen as it's no longer needed by active routes
+// class PlaceholderScreen extends StatelessWidget { ... } 

@@ -29,4 +29,13 @@ final databaseProvider = Provider<AppDatabase>((ref) {
 final noteDaoProvider = Provider<NoteDao>((ref) {
   final database = ref.watch(databaseProvider);
   return database.noteDao;
+});
+
+/// StreamProvider that watches all notes from the database.
+///
+/// It uses the [noteDaoProvider] to get the DAO instance and calls
+/// `watchAllNotes()` to get the stream.
+final allNotesStreamProvider = StreamProvider<List<Note>>((ref) {
+  final dao = ref.watch(noteDaoProvider);
+  return dao.watchAllNotes();
 }); 
