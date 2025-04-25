@@ -7,6 +7,7 @@ import 'package:lockpaper/features/notes/data/note_table.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqlite3/sqlite3.dart';
+import 'dart:async'; // Import for StreamSubscription
 // import 'package:sqflite_sqlcipher/sqflite.dart' show Database;
 // TODO: Import sqflite_sqlcipher if needed for encryption
 
@@ -51,6 +52,13 @@ class AppDatabase extends _$AppDatabase {
   /// Increment this number whenever you change the schema.
   @override
   int get schemaVersion => 1;
+
+  // Override close method to clean up resources
+  @override
+  Future<void> close() {
+    print("Closing AppDatabase...");
+    return super.close();
+  }
 
   // TODO: Implement migrations if schema changes in the future
   // @override
@@ -108,22 +116,64 @@ QueryExecutor _openConnection(String encryptionKey) {
 /// once the user successfully authenticates.
 final encryptionKeyProvider = StateProvider<String?>((ref) => null);
 
-/// Provider for the AppDatabase.
-/// Now a FutureProvider because opening the DB is async.
-final appDatabaseProvider = Provider<AppDatabase>((ref) {
-  // Use watch instead of read if you want this provider to rebuild
-  // automatically when the key changes (e.g., on first set).
-  final key = ref.watch(encryptionKeyProvider);
+/// StateNotifier for managing the AppDatabase lifecycle.
+class AppDatabaseNotifier extends StateNotifier<AppDatabase?> {
+  final Ref _ref;
+  AppDatabase? _databaseInstance; // Hold the single instance
 
-  if (key == null) {
-    // Database cannot be opened without the key.
-    // Using a simple Provider means dependents might error if they try to read
-    // before the key is set. A FutureProvider might offer better loading states.
-    // Consider how UI will handle this state.
-    throw Exception("AppDatabase requested but encryption key is not available.");
+  AppDatabaseNotifier(this._ref) : super(null) {
+    _listenToKey();
   }
 
-  // _openConnection now returns QueryExecutor directly via LazyDatabase
-  final executor = _openConnection(key);
-  return AppDatabase(executor);
-}); 
+  void _listenToKey() {
+    _ref.listen<String?>(encryptionKeyProvider, (previousKey, newKey) async {
+      if (newKey != null && _databaseInstance == null) {
+        print("Encryption key available, opening database...");
+        try {
+          final executor = _openConnection(newKey);
+          _databaseInstance = AppDatabase(executor);
+          state = _databaseInstance; // Update state with the created instance
+          print("Database instance created and ready.");
+        } catch (e) {
+          print("Error opening database: $e");
+          // Optionally set state to an error state or keep it null
+          state = null; 
+        }
+      } else if (newKey == null && _databaseInstance != null) {
+        // Key removed (e.g., explicit logout/reset in future?), close DB
+        print("Encryption key removed, closing database...");
+        _closeDatabase();
+      }
+    }, fireImmediately: true); // Fire immediately to check initial key state
+  }
+
+  Future<void> _closeDatabase() async {
+    await _databaseInstance?.close();
+    _databaseInstance = null;
+    state = null;
+    print("Database instance closed.");
+  }
+
+  @override
+  void dispose() {
+    print("Disposing AppDatabaseNotifier, closing database.");
+    _closeDatabase(); // Ensure database is closed when notifier is disposed
+    super.dispose();
+  }
+}
+
+/// Provider for the AppDatabase instance.
+/// Manages the database lifecycle based on the encryption key.
+final appDatabaseProvider = StateNotifierProvider<AppDatabaseNotifier, AppDatabase?>((ref) {
+  return AppDatabaseNotifier(ref);
+});
+
+// REMOVED old Provider
+// final appDatabaseProvider = Provider<AppDatabase>((ref) {
+//   final key = ref.watch(encryptionKeyProvider);
+//   if (key == null) {
+//     throw Exception("AppDatabase requested but encryption key is not available.");
+//   }
+//   final executor = _openConnection(key);
+//   return AppDatabase(executor);
+// }); 
