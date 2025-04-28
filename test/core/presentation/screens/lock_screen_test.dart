@@ -78,6 +78,10 @@ void main() {
       bool unlocked = false;
       void testOnUnlocked() => unlocked = true;
 
+      // Ensure the initial state reported by binding is resumed BEFORE building
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump(); // Process the state change
+
       // Build the widget
       await tester.pumpWidget(createTestableWidget(testOnUnlocked));
       // Pump and settle to allow the post-frame callback and auth flow to complete
