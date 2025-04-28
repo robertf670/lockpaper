@@ -150,7 +150,10 @@ class AppDatabaseNotifier extends StateNotifier<AppDatabase?> {
   Future<void> _closeDatabase() async {
     await _databaseInstance?.close();
     _databaseInstance = null;
-    state = null;
+    // Check if mounted before modifying state during disposal
+    if (mounted) {
+      state = null;
+    }
     print("Database instance closed.");
   }
 

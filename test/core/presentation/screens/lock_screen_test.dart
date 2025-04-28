@@ -6,12 +6,14 @@ import 'package:lockpaper/core/presentation/screens/lock_screen.dart';
 import 'package:lockpaper/core/security/biometrics_service.dart';
 import 'package:lockpaper/core/security/encryption_key_service.dart';
 import 'package:lockpaper/features/notes/data/app_database.dart'; // For encryptionKeyProvider
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:local_auth/local_auth.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-// Generate mocks for services if needed for interaction testing
-@GenerateMocks([BiometricsService, EncryptionKeyService])
-import 'lock_screen_test.mocks.dart';
+// Mocks are now generated via test/mocks/core_mocks.dart
+// @GenerateMocks([BiometricsService, EncryptionKeyService])
+import '../mocks/core_mocks.mocks.dart'; // Import central generated mocks
 
 void main() {
   // Mocks for dependencies

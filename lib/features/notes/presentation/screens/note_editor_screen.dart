@@ -180,7 +180,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
         : ref.watch(noteByIdStreamProvider(widget.noteId!));
 
     // Populate controllers *once* when data arrives for an existing note
-    if (!isNewNote && noteAsyncValue.hasValue) {
+    if (!isNewNote && noteAsyncValue.hasValue && noteAsyncValue.value != null) {
       _titleController.text = noteAsyncValue.value!.title;
       _bodyController.text = noteAsyncValue.value!.body;
       // Use WidgetsBinding to delay setting the flag until after this build

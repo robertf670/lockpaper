@@ -5,9 +5,9 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'dart:convert'; // Import for base64Url
 
-// Generate mocks for FlutterSecureStorage by running build_runner
-@GenerateMocks([FlutterSecureStorage])
-import 'encryption_key_service_test.mocks.dart'; // Import generated mocks
+// Mocks are now generated via test/mocks/core_mocks.dart
+// @GenerateMocks([FlutterSecureStorage])
+import '../mocks/core_mocks.mocks.dart'; // Import central generated mocks
 
 void main() {
   late MockFlutterSecureStorage mockStorage;

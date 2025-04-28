@@ -5,9 +5,9 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 import 'package:flutter/services.dart'; // For PlatformException
 
-// Generate mocks for LocalAuthentication
-@GenerateMocks([LocalAuthentication])
-import 'biometrics_service_test.mocks.dart'; // Import generated mocks
+// Mocks are now generated via test/mocks/core_mocks.dart
+// @GenerateMocks([LocalAuthentication]) 
+import '../mocks/core_mocks.mocks.dart'; // Import central generated mocks
 
 void main() {
   late MockLocalAuthentication mockAuth;
