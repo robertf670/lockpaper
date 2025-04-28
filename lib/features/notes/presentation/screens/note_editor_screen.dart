@@ -5,6 +5,7 @@ import 'package:drift/drift.dart' as drift; // Import drift for Companion
 import 'package:lockpaper/features/notes/application/database_providers.dart'; // Import providers
 import 'package:lockpaper/features/notes/data/app_database.dart'; // Import Note
 import 'package:lockpaper/features/notes/presentation/screens/notes_list_screen.dart'; // Import NotesListScreen for navigation fallback
+import 'package:flutter_markdown/flutter_markdown.dart'; // Import Markdown
 
 /// Screen for creating or editing a note.
 class NoteEditorScreen extends ConsumerStatefulWidget {
@@ -23,6 +24,7 @@ class NoteEditorScreen extends ConsumerStatefulWidget {
 class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _bodyController;
+  bool _isPreviewMode = false; // State variable for preview toggle
 
   // TODO: Load existing note data if widget.noteId is not null
   // TODO: Implement delete logic
@@ -220,6 +222,16 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           title: Text(isNewNote ? 'New Note' : 'Edit Note'),
           // Show actions only when data is loaded or when creating a new note
           actions: (isNewNote || noteAsyncValue.hasValue) ? [
+            // Preview Toggle Button
+            IconButton(
+              icon: Icon(_isPreviewMode ? Icons.edit_note_outlined : Icons.visibility_outlined),
+              tooltip: _isPreviewMode ? 'Edit Note' : 'Preview Note',
+              onPressed: () {
+                setState(() {
+                  _isPreviewMode = !_isPreviewMode;
+                });
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.save_alt_outlined),
               tooltip: 'Save Note',
@@ -263,18 +275,25 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                     SizedBox(
                       // Adjust height as needed, or use MediaQuery
                       height: MediaQuery.of(context).size.height * 0.5,
-                      child: TextField(
-                        key: const Key('note_body_field'),
-                        decoration: const InputDecoration(
-                          hintText: 'Note content...',
-                          border: InputBorder.none,
-                        ),
-                        maxLines: null,
-                        expands: true,
-                        controller: _bodyController,
-                        textCapitalization: TextCapitalization.sentences,
-                        textAlignVertical: TextAlignVertical.top,
-                      ),
+                      child: _isPreviewMode
+                          ? MarkdownBody( // Show Markdown Preview
+                              data: _bodyController.text, 
+                              // Add padding if needed, or style
+                              // Add selectable: true for text selection?
+                              // selectable: true,
+                            )
+                          : TextField( // Show Text Editor
+                              key: const Key('note_body_field'),
+                              decoration: const InputDecoration(
+                                hintText: 'Note content (Markdown supported)...',
+                                border: InputBorder.none,
+                              ),
+                              maxLines: null,
+                              expands: true,
+                              controller: _bodyController,
+                              textCapitalization: TextCapitalization.sentences,
+                              textAlignVertical: TextAlignVertical.top,
+                            ),
                     ),
                   ],
                 ),
