@@ -25,53 +25,47 @@ class AppTheme {
 
   /// Generates the theme based on optional CorePalette and brightness.
   /// Falls back to a predefined scheme if palette is null.
-  static ThemeData getTheme(ColorScheme? colorScheme, Brightness brightness) {
-    if (colorScheme != null) {
-      // colorScheme exists: Use it directly
-      if (brightness == Brightness.light) {
-        return FlexThemeData.light(
-          colorScheme: colorScheme, // UPDATE
-          surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
-          blendLevel: 7,
-          subThemesData: _subThemesData,
-          visualDensity: FlexColorScheme.comfortablePlatformDensity,
-          useMaterial3: true,
-          swapLegacyOnMaterial3: true,
-        );
-      } else {
-        return FlexThemeData.dark(
-          colorScheme: colorScheme, // UPDATE
-          surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
-          blendLevel: 13,
-          subThemesData: _darkSubThemesData,
-          visualDensity: FlexColorScheme.comfortablePlatformDensity,
-          useMaterial3: true,
-          swapLegacyOnMaterial3: true,
-        );
-      }
-    } else {
-      // colorScheme is null: Use the fallback scheme directly
-      if (brightness == Brightness.light) {
-        return FlexThemeData.light(
-          scheme: _fallbackScheme,
-          surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
-          blendLevel: 7,
-          subThemesData: _subThemesData,
-          visualDensity: FlexColorScheme.comfortablePlatformDensity,
-          useMaterial3: true,
-          swapLegacyOnMaterial3: true,
-        );
-      } else {
-        return FlexThemeData.dark(
-          scheme: _fallbackScheme,
-          surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
-          blendLevel: 13,
-          subThemesData: _darkSubThemesData,
-          visualDensity: FlexColorScheme.comfortablePlatformDensity,
-          useMaterial3: true,
-          swapLegacyOnMaterial3: true,
-        );
-      }
+  static ThemeData getTheme(ColorScheme? dynamicColorScheme, Brightness brightness) {
+    // Determine the effective color scheme (dynamic or fallback)
+    final ColorScheme effectiveColorScheme = dynamicColorScheme ?? 
+      ((brightness == Brightness.light)
+          ? FlexColorScheme.light(scheme: _fallbackScheme).colorScheme!
+          : FlexColorScheme.dark(scheme: _fallbackScheme).colorScheme!);
+
+    // Determine base typography
+    final baseTypography = (brightness == Brightness.light)
+        ? Typography.material2021().black
+        : Typography.material2021().white;
+
+    // Apply correct text colors based on the effective scheme
+    final textTheme = baseTypography.apply(bodyColor: effectiveColorScheme.onSurface);
+    final primaryTextTheme = baseTypography.apply(bodyColor: effectiveColorScheme.onPrimary);
+
+    // Build the theme data
+    if (brightness == Brightness.light) {
+      return FlexThemeData.light(
+        colorScheme: effectiveColorScheme, // Use the determined scheme
+        surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+        blendLevel: 7,
+        subThemesData: _subThemesData,
+        textTheme: textTheme, // Apply calculated textTheme
+        primaryTextTheme: primaryTextTheme, // Apply calculated primaryTextTheme
+        visualDensity: FlexColorScheme.comfortablePlatformDensity,
+        useMaterial3: true,
+        swapLegacyOnMaterial3: true,
+      );
+    } else { // Brightness.dark
+      return FlexThemeData.dark(
+        colorScheme: effectiveColorScheme, // Use the determined scheme
+        surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+        blendLevel: 13,
+        subThemesData: _darkSubThemesData,
+        textTheme: textTheme, // Apply calculated textTheme
+        primaryTextTheme: primaryTextTheme, // Apply calculated primaryTextTheme
+        visualDensity: FlexColorScheme.comfortablePlatformDensity,
+        useMaterial3: true,
+        swapLegacyOnMaterial3: true,
+      );
     }
   }
 
