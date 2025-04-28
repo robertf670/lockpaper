@@ -33,10 +33,12 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
     if (WidgetsBinding.instance.lifecycleState != null) {
       _appLifecycleState = WidgetsBinding.instance.lifecycleState;
     }
-    // Trigger authentication check after the first frame
+    // Trigger authentication check after the first frame, ONLY if app is currently resumed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // Ensure widget is still mounted before calling async method
-      if (mounted && ref.read(appLockStateProvider)) { 
+      // Ensure widget is still mounted AND app is resumed before calling async method
+      if (mounted && 
+          ref.read(appLockStateProvider) && 
+          _appLifecycleState == AppLifecycleState.resumed) { 
         _authenticate();
       }
     });
