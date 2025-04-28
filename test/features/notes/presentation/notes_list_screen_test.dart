@@ -130,17 +130,8 @@ void main() {
       notesStreamController.add([]);
        await tester.pumpAndSettle(); 
 
-      // TODO(debug): This finder consistently fails, even though debugDumpApp() shows
-      // the widget exists with the correct text. Suspected test framework issue.
-      // final specificCenterFinder = find.descendant(
-      //   of: find.byType(Scaffold), // Look within the Scaffold
-      //   matching: find.byWidgetPredicate((widget) => 
-      //     widget is Center && widget.child is Text && (widget.child as Text).data == 'No notes yet! Tap + to add one.'
-      //   ) // Match the specific Center with the right Text child
-      // );
-      // expect(specificCenterFinder, findsOneWidget);
-
-      expect(find.byType(ListView), findsNothing); // Ensure list is not shown
+      // Assert: Find the specific empty state text directly
+      expect(find.text('No notes yet. Tap + to add one!'), findsOneWidget);
     });
 
     testWidgets('Displays error message when error is emitted', (WidgetTester tester) async {
