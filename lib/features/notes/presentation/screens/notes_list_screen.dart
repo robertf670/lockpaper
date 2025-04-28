@@ -43,10 +43,11 @@ class NotesListScreen extends ConsumerWidget {
                 excludeSemantics: true, // Prevent child text being read separately
                 child: ListTile(
                   title: Text(note.title.isNotEmpty ? note.title : 'Untitled Note'),
-                  subtitle: MarkdownBody( // Replace Text with MarkdownBody
-                    data: note.body,
-                    shrinkWrap: true, // Important within lists
-                    // Consider adding style or constraints if needed later
+                  // Revert subtitle back to Text widget for stability
+                  subtitle: Text(
+                    note.body,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
                   // Navigate to editor on tap
                   onTap: () {
