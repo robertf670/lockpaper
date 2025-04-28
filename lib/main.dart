@@ -11,8 +11,8 @@ import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart'; // Needed f
 import 'package:path_provider/path_provider.dart'; // Import for temp dir
 // Explicitly show CorePalette from dynamic_color
 import 'package:dynamic_color/dynamic_color.dart';
-import 'package:flex_color_scheme/flex_color_scheme.dart';
-import 'package:go_router/go_router.dart';
+// import 'package:flex_color_scheme/flex_color_scheme.dart'; // Unused
+// import 'package:go_router/go_router.dart'; // Unused
 
 void main() async {
   // Ensure initialization FIRST
@@ -71,7 +71,7 @@ class MyApp extends ConsumerStatefulWidget {
 
 class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   // Flag to ignore the very first resume event on launch
-  bool _initialResumeProcessed = false;
+  // bool _initialResumeProcessed = false; // Unused
 
   @override
   void initState() {

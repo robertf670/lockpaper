@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:lockpaper/features/notes/application/database_providers.dart';
-import 'package:lockpaper/features/notes/data/app_database.dart'; // Import Note
+// import 'package:lockpaper/features/notes/data/app_database.dart'; // Unused
 import 'package:lockpaper/features/notes/presentation/screens/note_editor_screen.dart'; // Import for route name
 
 /// Screen that displays the list of notes.

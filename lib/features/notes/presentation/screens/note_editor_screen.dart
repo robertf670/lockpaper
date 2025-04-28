@@ -23,7 +23,6 @@ class NoteEditorScreen extends ConsumerStatefulWidget {
 class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _bodyController;
-  bool _didLoadInitialData = false;
 
   // TODO: Load existing note data if widget.noteId is not null
   // TODO: Implement delete logic
@@ -210,12 +209,6 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     if (!isNewNote && noteAsyncValue.hasValue && noteAsyncValue.value != null) {
       _titleController.text = noteAsyncValue.value!.title;
       _bodyController.text = noteAsyncValue.value!.body;
-      // Use WidgetsBinding to delay setting the flag until after this build
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) {
-           _didLoadInitialData = true;
-        }
-      });
     }
 
     // REMOVED Hero widget wrapping Scaffold

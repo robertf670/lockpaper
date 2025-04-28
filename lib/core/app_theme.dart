@@ -1,6 +1,6 @@
-import 'package:dynamic_color/dynamic_color.dart'; // Import CorePalette
-import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
+// import 'package:dynamic_color/dynamic_color.dart'; // Unused
 
 /// Contains the theme configuration for the application.
 class AppTheme {

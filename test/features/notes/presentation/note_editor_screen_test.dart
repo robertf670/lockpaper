@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:mocktail/mocktail.dart';
 import 'package:lockpaper/features/notes/application/database_providers.dart';
 import 'package:lockpaper/features/notes/data/app_database.dart';
 import 'package:lockpaper/features/notes/presentation/screens/note_editor_screen.dart';
-import 'package:mocktail/mocktail.dart';
 
 // Mocks
 class MockGoRouter extends Mock implements GoRouter {}
@@ -57,7 +56,7 @@ void main() {
   late MockGoRouter mockGoRouter;
   late MockNoteDao mockNoteDao;
   // Define controller here to close in tearDown
-  late StreamController<Note?> noteStreamController;
+  // late StreamController<Note?> noteStreamController; // Unused
 
   // Sample note data
   final testNote = Note(

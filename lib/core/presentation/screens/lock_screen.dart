@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockpaper/core/security/biometrics_service.dart';
-import 'package:local_auth/local_auth.dart';
+// import 'package:local_auth/local_auth.dart'; // Unused
 import 'package:lockpaper/core/application/app_lock_provider.dart';
 import 'package:lockpaper/core/security/encryption_key_service.dart';
 import 'package:lockpaper/features/notes/data/app_database.dart';
@@ -22,7 +22,7 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
   String _status = 'Waiting for authentication...';
   bool _isAuthenticating = false;
   // Flag to ensure auth trigger happens only once *per build cycle*
-  bool _authTriggeredThisBuild = false;
+  // bool _authTriggeredThisBuild = false; // Unused
   // Track app lifecycle state
   AppLifecycleState? _appLifecycleState;
 
