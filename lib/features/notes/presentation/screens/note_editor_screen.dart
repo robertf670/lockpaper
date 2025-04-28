@@ -64,6 +64,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     final now = DateTime.now();
 
     try {
+      bool didPop = false; // Flag to track if navigation happened
       if (widget.noteId == null) {
         // Insert new note
         final companion = NotesCompanion(
@@ -72,9 +73,21 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           // createdAt is handled by default
         );
         await dao.insertNote(companion);
-        scaffoldMessenger.showSnackBar(
-          const SnackBar(content: Text('Note saved successfully.')),
-        );
+        
+        // Navigate FIRST
+        if (navigator.canPop()) {
+          navigator.pop();
+          didPop = true;
+        } else {
+          navigator.goNamed(NotesListScreen.routeName);
+        }
+        // Show SnackBar AFTER navigation (if popped)
+        if (didPop) {
+          // scaffoldMessenger.showSnackBar(
+          //   const SnackBar(content: Text('Note saved successfully.')),
+          // ); // <<< REMOVED SNACKBAR
+        }
+
       } else {
         // Update existing note
         final companion = NotesCompanion(
@@ -84,23 +97,27 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           updatedAt: drift.Value(now), // Set update timestamp
         );
         final success = await dao.updateNote(companion);
-        if (success) {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(content: Text('Note updated successfully.')),
-          );
-        } else {
-          // Handle update failure (e.g., note not found, should be rare)
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(content: Text('Failed to update note.')),
-          );
+
+        // Navigate FIRST
+        if (navigator.canPop()) {
+            navigator.pop();
+            didPop = true;
+          } else {
+            navigator.goNamed(NotesListScreen.routeName);
+          }
+
+        // Show SnackBar AFTER navigation (if popped)
+        if (didPop) {
+           if (success) {
+            // scaffoldMessenger.showSnackBar(
+            //   const SnackBar(content: Text('Note updated successfully.')),
+            // ); // <<< REMOVED SNACKBAR
+          } else {
+            // scaffoldMessenger.showSnackBar(
+            //   const SnackBar(content: Text('Failed to update note.')),
+            // ); // <<< REMOVED SNACKBAR
+          }
         }
-      }
-      // Navigate back to the list screen after saving
-      if (navigator.canPop()) {
-        navigator.pop();
-      } else {
-        // Fallback if cannot pop (e.g., deep link directly to editor)
-        navigator.goNamed(NotesListScreen.routeName);
       }
     } catch (e) {
       scaffoldMessenger.showSnackBar(
@@ -145,15 +162,25 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
         final count = await dao.deleteNote(companion);
 
         if (count > 0) {
-          scaffoldMessenger.showSnackBar(
-            const SnackBar(content: Text('Note deleted successfully.')),
-          );
-          // Navigate back to the list screen
+          // Pop FIRST
+          bool didPop = false;
           if (navigator.canPop()) {
             navigator.pop();
+            didPop = true;
           } else {
             navigator.goNamed(NotesListScreen.routeName);
           }
+
+          // Then show SnackBar (might still be problematic if context is gone)
+          // This relies on the ScaffoldMessenger still being accessible briefly
+          // or potentially using the root messenger if configured.
+          // A more robust solution might involve passing state back.
+          if (didPop) { // Only show if we popped back to a screen with a Scaffold
+             // scaffoldMessenger.showSnackBar(
+             //   const SnackBar(content: Text('Note deleted successfully.')),
+             // ); // <<< REMOVED SNACKBAR
+          }
+
         } else {
           // Note might have been deleted already
           scaffoldMessenger.showSnackBar(

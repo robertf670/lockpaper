@@ -96,29 +96,12 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     print('[MyApp didChangeAppLifecycleState] State: $state');
     _appLifecycleState = state; // Update state here
 
-    // Lock the app when it goes into the background (paused or inactive)
-    // Only lock if it's currently unlocked.
-    // Read the current lock state directly here
     final isCurrentlyLocked = ref.read(appLockStateProvider);
     if ((state == AppLifecycleState.paused || state == AppLifecycleState.inactive) &&
-        !isCurrentlyLocked) { // Check the read state
+        !isCurrentlyLocked) { 
       print('[MyApp didChangeAppLifecycleState] Locking on backgrounding.');
       ref.read(appLockStateProvider.notifier).state = true;
     }
-
-    // We don't need special handling for resuming here anymore.
-    // If the app resumes and appLockStateProvider is true, MyApp will build LockScreen.
-    // If the app resumes and appLockStateProvider is false, MyApp will build the router.
-    // if (state == AppLifecycleState.resumed) {
-    //   if (!_initialResumeProcessed) {
-    //     _initialResumeProcessed = true;
-    //   } else {
-    //     // Only re-lock if not currently in the unlock grace period
-    //     // if (!_isUnlocking) { // REMOVED
-    //     //  ref.read(appLockStateProvider.notifier).state = true;
-    //     // }
-    //   }
-    // }
   }
 
   @override
@@ -130,6 +113,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     final darkTheme = AppTheme.getTheme(widget.darkDynamic, Brightness.dark);
 
     if (isLocked) {
+      // Original LockScreen instantiation restored
       return MaterialApp(
         title: 'Lockpaper',
         theme: lightTheme, // Use dynamic or fallback theme
@@ -138,15 +122,8 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
         debugShowCheckedModeBanner: false,
         home: LockScreen(
           onUnlocked: () {
-            // // Set grace period flag, unlock, then reset flag // REMOVED
-            // setState(() { _isUnlocking = true; }); // REMOVED
             print('[MyApp build - onUnlocked] Setting lock state to false.');
             ref.read(appLockStateProvider.notifier).state = false;
-            // Future.delayed(const Duration(milliseconds: 100), () { // REMOVED
-            //    if (mounted) { // Check if still mounted before resetting flag // REMOVED
-            //      setState(() { _isUnlocking = false; }); // REMOVED
-            //    } // REMOVED
-            // }); // REMOVED
           },
         ),
       );

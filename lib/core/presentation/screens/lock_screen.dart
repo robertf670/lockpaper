@@ -56,8 +56,8 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
       final isLocked = ref.read(appLockStateProvider);
       print('[LockScreen didChangeAppLifecycleState] Resumed. isLocked: $isLocked, isAuthenticating: $_isAuthenticating');
       if (isLocked && !_isAuthenticating) {
-        print('[LockScreen didChangeAppLifecycleState] Triggering authenticate on resume.');
-        _authenticate();
+        print('[LockScreen didChangeAppLifecycleState] Triggering authenticate on resume.'); // Restored log
+        _authenticate(); // <<< Restored call
       }
     }
     // No need for setState here unless UI depends directly on _appLifecycleState
@@ -164,24 +164,19 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
     print('[LockScreen build] Called. Status: $_status, isAuthenticating: $_isAuthenticating');
     // _authTriggeredThisBuild = false; // REMOVED
 
-    // REMOVE AUTH TRIGGER LOGIC FROM BUILD
-    // final isLocked = ref.watch(appLockStateProvider);
-    // print('[LockScreen build] isLocked: $isLocked, _authTriggeredThisBuild: $_authTriggeredThisBuild');
-    // if (isLocked && !_authTriggeredThisBuild) {
-    //   _authTriggeredThisBuild = true;
-    //   print('[LockScreen build] Triggering auth via post-frame callback');
-    //   WidgetsBinding.instance.addPostFrameCallback((_) {
-    //      print('[LockScreen build] PostFrameCallback running. Lifecycle: $_appLifecycleState');
-    //      // Check mount status and lifecycle state again inside the callback
-    //      if(mounted && _appLifecycleState == AppLifecycleState.resumed) {
-    //        print('[LockScreen build] PostFrameCallback: Conditions met, calling _authenticate.');
-    //        _authenticate();
-    //      } else {
-    //         print('[LockScreen build] PostFrameCallback: Widget unmounted or app not resumed, skipping auth.');
-    //      }
-    //   });
-    // }
+    // <<< Restored original build method >>>
+    /* // Simplified build method commented out
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Unlock Lockpaper (Simplified)'),
+      ),
+      body: const Center(
+        child: Text('Simplified Lock Screen for Testing'),
+      ),
+    );
+    */
 
+    // Original build method restored
     return Scaffold(
       appBar: AppBar(
         title: const Text('Unlock Lockpaper'),
@@ -198,11 +193,12 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
             const SizedBox(height: 30),
             ElevatedButton.icon(
               icon: const Icon(Icons.fingerprint),
-              // Add Semantics label to the button text for clarity
-              label: const Text('Authenticate with biometrics'), 
-              onPressed: _isAuthenticating ? null : _authenticate, // Disable button while authenticating
+              label: const Text('Authenticate with biometrics'),
+              onPressed: _isAuthenticating ? null : _authenticate,
+              // Add Semantics for button state
+              // Semantics properties can be added here if needed, 
+              // e.g., hint, enabled state description
             ),
-            // TODO: Add button/link to trigger PIN entry
           ],
         ),
       ),
