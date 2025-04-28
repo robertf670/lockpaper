@@ -293,6 +293,40 @@ void main() {
       await testWidgetResult.controller.close();
     });
 
-    // TODO: Test preventing saving empty note
+    testWidgets('Does not save or pop when note is empty', (WidgetTester tester) async {
+      // Arrange
+      // No need to mock DAO methods as they shouldn't be called
+
+      final testWidgetResult = createTestableWidget(
+        noteId: null, // New note
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      await tester.pumpAndSettle();
+
+      // Act
+      // Ensure fields are empty (they should be by default)
+      expect(find.widgetWithText(TextField, ''), findsNWidgets(2)); // Title and Body
+
+      // Tap the save button
+      await tester.tap(find.byIcon(Icons.save_alt_outlined));
+      await tester.pumpAndSettle(); // Allow SnackBar to show
+
+      // Assert
+      // Verify that insertNote was NOT called
+      verifyNever(() => mockNoteDao.insertNote(any()));
+
+      // Verify that pop was NOT called
+      verifyNever(() => mockGoRouter.pop());
+
+      // Verify that the SnackBar is shown
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.text('Cannot save an empty note.'), findsOneWidget);
+
+      // Clean up
+      testWidgetResult.controller.close(); // Close even if not used
+    });
+
   });
 } 
