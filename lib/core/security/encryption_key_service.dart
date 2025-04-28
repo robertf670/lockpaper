@@ -25,14 +25,12 @@ class EncryptionKeyService {
     // Use URL-safe Base64 encoding suitable for storage
     final base64Key = base64UrlEncode(keyBytes);
     await _storage.write(key: _dbKeyStorageKey, value: base64Key);
-    print('Generated and stored new key.'); // Added print for testing
     return base64Key;
   }
 
   /// Retrieves the stored database key.
   Future<String?> getDatabaseKey() async {
     final key = await _storage.read(key: _dbKeyStorageKey);
-    print('Retrieved key: ${key != null ? 'found' : 'not found'}'); // Added print
     return key;
   }
 
@@ -40,14 +38,12 @@ class EncryptionKeyService {
   Future<bool> hasStoredKey() async {
     final key = await _storage.read(key: _dbKeyStorageKey);
     final exists = key != null && key.isNotEmpty;
-    print('Checked for key, exists: $exists'); // Added print
     return exists;
   }
 
   /// Deletes the stored database key.
    Future<void> deleteDatabaseKey() async {
     await _storage.delete(key: _dbKeyStorageKey);
-    print('Deleted stored key.'); // Added print
   }
 }
 

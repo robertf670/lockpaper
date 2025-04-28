@@ -83,7 +83,7 @@ void main() {
     testWidgets('Tapping authenticate button triggers auth flow and calls onUnlocked on success', (WidgetTester tester) async {
       // Arrange
       bool unlocked = false;
-      VoidCallback testOnUnlocked = () => unlocked = true;
+      void testOnUnlocked() => unlocked = true;
 
       // Set up mocks for the flow triggered specifically by the TAP
       // canAuthenticate needs to be true for the button press to proceed
@@ -109,18 +109,22 @@ void main() {
       expect(unlocked, isTrue);
     });
 
+    // Helper function for setting up authentication mocks
+    void setupAuthMocks(bool canAuth, bool authSuccess, bool hasKey, String? key) {
+      when(() => mockBiometricsService.canAuthenticate).thenAnswer((_) async => canAuth);
+      when(() => mockBiometricsService.authenticate(any())).thenAnswer((_) async => authSuccess);
+      when(() => mockEncryptionKeyService.hasStoredKey()).thenAnswer((_) async => hasKey);
+      when(() => mockEncryptionKeyService.getDatabaseKey()).thenAnswer((_) async => key);
+    }
+
     // Test for resume trigger (separate test)
     testWidgets('Resuming app triggers auth flow and calls onUnlocked on success', (WidgetTester tester) async {
-       // Arrange
+      // Arrange
       bool unlocked = false;
-      VoidCallback testOnUnlocked = () => unlocked = true;
+      void testOnUnlocked() => unlocked = true;
 
-      // Set up mocks for the flow triggered specifically by RESUME
-      // canAuthenticate needs to be true for the resume trigger to proceed
-      when(() => mockBiometricsService.canAuthenticate).thenAnswer((_) => Future.value(true));
-      when(() => mockBiometricsService.authenticate(any())).thenAnswer((_) => Future.value(true)); 
-      when(() => mockEncryptionKeyService.hasStoredKey()).thenAnswer((_) => Future.value(true));
-      when(() => mockEncryptionKeyService.getDatabaseKey()).thenAnswer((_) => Future<String?>.value('mock_key'));
+      // Use helper to set up mocks
+      setupAuthMocks(true, true, true, 'mock_key');
 
       // Build the widget
       await tester.pumpWidget(createTestableWidget(testOnUnlocked));

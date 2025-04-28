@@ -145,9 +145,9 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             child: const Text('Cancel'),
           ),
           TextButton(
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
             onPressed: () => Navigator.of(context).pop(true), // Confirmed
             child: const Text('Delete'),
-            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
           ),
         ],
       ),

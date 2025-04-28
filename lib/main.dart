@@ -20,23 +20,23 @@ void main() async {
 
   // Tell sqlite3 package how to load SQLCipher on Android *FIRST*
   if (Platform.isAndroid) {
-    print("Applying Android SQLCipher workaround and override...");
+    // print("Applying Android SQLCipher workaround and override...");
     await applyWorkaroundToOpenSqlCipherOnOldAndroidVersions(); 
     open.overrideFor(OperatingSystem.android, openCipherOnAndroid);
-    print("Android SQLCipher override applied.");
+    // print("Android SQLCipher override applied.");
   }
 
   // Set temp directory for sqlite3 *after* override
   final cachebase = (await getTemporaryDirectory()).path;
   sqlite3.tempDirectory = cachebase;
-  print("Set sqlite3.tempDirectory to: $cachebase");
+  // print("Set sqlite3.tempDirectory to: $cachebase");
 
   // Add overrides for other platforms if necessary, e.g.:
   // if (Platform.isIOS || Platform.isMacOS) { 
   //   open.overrideFor(Platform.operatingSystem, () => DynamicLibrary.process());
   // }
 
-  print("Running app...");
+  // print("Running app...");
   // Wrap ProviderScope in DynamicColorBuilder
   runApp(const DynamicColorApp());
 }
@@ -79,7 +79,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     if (WidgetsBinding.instance.lifecycleState != null) {
       _appLifecycleState = WidgetsBinding.instance.lifecycleState;
-      print('[MyApp initState] Initial Lifecycle State: $_appLifecycleState');
+      // print('[MyApp initState] Initial Lifecycle State: $_appLifecycleState');
     }
   }
 
@@ -93,13 +93,13 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    print('[MyApp didChangeAppLifecycleState] State: $state');
+    // print('[MyApp didChangeAppLifecycleState] State: $state');
     _appLifecycleState = state; // Update state here
 
     final isCurrentlyLocked = ref.read(appLockStateProvider);
     if ((state == AppLifecycleState.paused || state == AppLifecycleState.inactive) &&
         !isCurrentlyLocked) { 
-      print('[MyApp didChangeAppLifecycleState] Locking on backgrounding.');
+      // print('[MyApp didChangeAppLifecycleState] Locking on backgrounding.');
       ref.read(appLockStateProvider.notifier).state = true;
     }
   }
@@ -122,7 +122,7 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
         debugShowCheckedModeBanner: false,
         home: LockScreen(
           onUnlocked: () {
-            print('[MyApp build - onUnlocked] Setting lock state to false.');
+            // print('[MyApp build - onUnlocked] Setting lock state to false.');
             ref.read(appLockStateProvider.notifier).state = false;
           },
         ),

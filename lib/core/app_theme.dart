@@ -28,12 +28,6 @@ class AppTheme {
   static ThemeData getTheme(ColorScheme? colorScheme, Brightness brightness) {
     if (colorScheme != null) {
       // colorScheme exists: Use it directly
-      print('Generating theme from provided ColorScheme ($brightness)');
-      // final ColorScheme baseColorScheme = ColorScheme.fromSeed( // REMOVE
-      //   seedColor: Color(palette.primary.get(40)), // REMOVE
-      //   brightness: brightness, // REMOVE
-      // ); // REMOVE
-
       if (brightness == Brightness.light) {
         return FlexThemeData.light(
           colorScheme: colorScheme, // UPDATE
@@ -57,7 +51,6 @@ class AppTheme {
       }
     } else {
       // colorScheme is null: Use the fallback scheme directly
-      print('Provided ColorScheme not available, using fallback scheme ($brightness)');
       if (brightness == Brightness.light) {
         return FlexThemeData.light(
           scheme: _fallbackScheme,

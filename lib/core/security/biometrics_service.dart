@@ -1,6 +1,8 @@
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:local_auth/error_codes.dart' as auth_error;
 // Remove platform-specific imports unless needed for specific features
 // import 'package:local_auth_android/local_auth_android.dart';
 // import 'package:local_auth_ios/local_auth_ios.dart';
@@ -11,22 +13,20 @@ part 'biometrics_service.g.dart';
 class BiometricsService {
   // Accept LocalAuthentication via constructor
   final LocalAuthentication _auth;
+  final Ref ref;
 
   // SIMPLIFIED Constructor: Takes required positional argument
-  BiometricsService(this._auth);
+  BiometricsService(this._auth, this.ref);
 
   /// Checks if the device supports biometrics and if they are enrolled.
   Future<bool> get canAuthenticate async {
     try {
       final bool isDeviceSupported = await _auth.isDeviceSupported();
-      print('[BiometricsService] isDeviceSupported: $isDeviceSupported');
       if (!isDeviceSupported) return false;
 
       final bool canCheckBiometrics = await _auth.canCheckBiometrics;
-      print('[BiometricsService] canCheckBiometrics: $canCheckBiometrics');
       return canCheckBiometrics;
     } catch (e) {
-      print('[BiometricsService] Error checking biometrics: $e');
       return false;
     }
   }
@@ -44,10 +44,8 @@ class BiometricsService {
           biometricOnly: false,
         ),
       );
-      print('[BiometricsService] authenticate result: $didAuthenticate');
       return didAuthenticate;
     } catch (e) {
-      print('[BiometricsService] Authentication error: $e');
       return false;
     }
   }
@@ -55,7 +53,12 @@ class BiometricsService {
 
 /// Riverpod provider for the BiometricsService.
 @riverpod
-BiometricsService biometricsService(BiometricsServiceRef ref) {
+BiometricsService biometricsService(Ref ref) {
   // Provide the actual LocalAuthentication instance
-  return BiometricsService(LocalAuthentication());
-} 
+  return BiometricsService(LocalAuthentication(), ref);
+}
+
+// Remove the duplicate manual provider
+// final biometricsServiceProvider = Provider<BiometricsService>((ref) {
+//   return BiometricsService(LocalAuthentication(), ref);
+// }); 

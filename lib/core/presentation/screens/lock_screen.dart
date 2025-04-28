@@ -29,17 +29,14 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
   @override
   void initState() {
     super.initState();
-    print('[LockScreen initState] Called');
     WidgetsBinding.instance.addObserver(this);
     if (WidgetsBinding.instance.lifecycleState != null) {
       _appLifecycleState = WidgetsBinding.instance.lifecycleState;
-      print('[LockScreen initState] Initial Lifecycle State: $_appLifecycleState');
     }
   }
 
   @override
   void dispose() {
-    print('[LockScreen dispose] Called');
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -47,16 +44,13 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    print('[LockScreen didChangeAppLifecycleState] State: $state');
     final previousState = _appLifecycleState;
     _appLifecycleState = state; // Update state first
     // Trigger auth only when resuming, if locked, and not already authenticating
     if (state == AppLifecycleState.resumed && previousState != AppLifecycleState.resumed) {
        // Check lock state from provider
       final isLocked = ref.read(appLockStateProvider);
-      print('[LockScreen didChangeAppLifecycleState] Resumed. isLocked: $isLocked, isAuthenticating: $_isAuthenticating');
       if (isLocked && !_isAuthenticating) {
-        print('[LockScreen didChangeAppLifecycleState] Triggering authenticate on resume.'); // Restored log
         _authenticate(); // <<< Restored call
       }
     }
@@ -70,7 +64,6 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
     // --- IMMEDIATE GUARD --- 
     // Prevent reentry if already authenticating or widget is disposed
     if (!mounted || _isAuthenticating) {
-      print('[LockScreen _authenticate] Skipped: Already authenticating or unmounted.');
       return;
     }
     // Set flag *immediately* after the guard
@@ -84,7 +77,7 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
     //   return;
     // }
     
-    print('[LockScreen _authenticate] Called.'); // Simplified log
+    // print('[LockScreen _authenticate] Called.'); // Simplified log
 
     // Update status *after* confirming we are proceeding
     setState(() {
@@ -97,7 +90,7 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
     bool authenticated = false;
     try {
       final bool canAuth = await service.canAuthenticate;
-      print('[LockScreen _authenticate] canAuthenticate result: $canAuth');
+      // print('[LockScreen _authenticate] canAuthenticate result: $canAuth');
 
       // REMOVED Explicit check for device support - now part of canAuthenticate
       // final bool deviceSupported = await LocalAuthentication().isDeviceSupported();
@@ -106,23 +99,23 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
       // if (canAuth && deviceSupported) { // Old check
       if (canAuth) { // Simplified check relying on BiometricsService
         authenticated = await service.authenticate('Please authenticate to access your notes');
-        print('[LockScreen _authenticate] authenticate result: $authenticated');
+        // print('[LockScreen _authenticate] authenticate result: $authenticated');
         if (authenticated) {
-          print('[LockScreen _authenticate] Authentication successful. Handling encryption key...');
+          // print('[LockScreen _authenticate] Authentication successful. Handling encryption key...');
           String? key;
           final bool keyExists = await keyService.hasStoredKey();
           if (keyExists) {
-            print('[LockScreen _authenticate] Existing key found. Retrieving...');
+            // print('[LockScreen _authenticate] Existing key found. Retrieving...');
             key = await keyService.getDatabaseKey();
-            print('[LockScreen _authenticate] Key retrieved.');
+            // print('[LockScreen _authenticate] Key retrieved.');
           } else {
-             print('[LockScreen _authenticate] No key found in storage. Generating new key...');
+             // print('[LockScreen _authenticate] No key found in storage. Generating new key...');
              // Generate and store a new key if one doesn't exist
              try {
                key = await keyService.generateAndStoreNewKey();
-               print('[LockScreen _authenticate] New key generated and stored.');
+               // print('[LockScreen _authenticate] New key generated and stored.');
              } catch (e) {
-               print('[LockScreen _authenticate] Error generating/storing key: $e');
+               // print('[LockScreen _authenticate] Error generating/storing key: $e');
                key = null;
              }
              // key = null; // Ensure key is null if not found // OLD LINE
@@ -130,12 +123,12 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
           }
 
           if (key != null && key.isNotEmpty) {
-            print('[LockScreen _authenticate] Setting encryption key provider...');
+            // print('[LockScreen _authenticate] Setting encryption key provider...');
             ref.read(encryptionKeyProvider.notifier).state = key;
-            print('[LockScreen _authenticate] Key provider set. Calling onUnlocked.');
+            // print('[LockScreen _authenticate] Key provider set. Calling onUnlocked.');
             widget.onUnlocked(); // Proceed to unlock the app UI
           } else {
-            print('[LockScreen _authenticate] Error: Failed to retrieve or generate key.');
+            // print('[LockScreen _authenticate] Error: Failed to retrieve or generate key.');
             setState(() => _status = 'Error: Could not access encryption key.');
           }
         } else {
@@ -146,11 +139,11 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
         // TODO: Implement PIN fallback mechanism here
       }
     } on PlatformException catch (e) {
-      print('[LockScreen _authenticate] PlatformException: ${e.code} - ${e.message}');
+      // print('[LockScreen _authenticate] PlatformException: ${e.code} - ${e.message}');
       setState(() => _status = 'Error: ${e.message ?? "Unknown error"}');
       // Handle specific errors like lockout if needed
     } finally {
-      print('[LockScreen _authenticate] Finally block. Mounted: $mounted, Authenticated: $authenticated');
+      // print('[LockScreen _authenticate] Finally block. Mounted: $mounted, Authenticated: $authenticated');
       // Only reset the flag if mounted and authentication didn't succeed
       // If successful, the widget will be disposed anyway.
       if (mounted && !authenticated) { 
@@ -161,7 +154,7 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
 
   @override
   Widget build(BuildContext context) {
-    print('[LockScreen build] Called. Status: $_status, isAuthenticating: $_isAuthenticating');
+    // print('[LockScreen build] Called. Status: $_status, isAuthenticating: $_isAuthenticating');
     // _authTriggeredThisBuild = false; // REMOVED
 
     // <<< Restored original build method >>>

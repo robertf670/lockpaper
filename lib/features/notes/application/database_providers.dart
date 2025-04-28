@@ -31,7 +31,7 @@ final allNotesStreamProvider = StreamProvider<List<Note>>((ref) {
     return dao.watchAllNotes();
   } catch (e, stackTrace) {
     // Log the error (likely DB not ready) and return an error stream
-    print('Error watching noteDaoProvider in allNotesStreamProvider: $e\n$stackTrace');
+    // print('Error watching noteDaoProvider in allNotesStreamProvider: $e\n$stackTrace');
     // UI needs to handle this stream error state (e.g., show loading/error message)
     return Stream.error(e, stackTrace);
   }
@@ -47,7 +47,7 @@ final noteByIdStreamProvider = StreamProvider.family<Note?, int>((ref, noteId) {
     return dao.watchNoteById(noteId);
   } catch (e, stackTrace) {
     // Log the error and return an error stream
-    print('Error watching noteDaoProvider in noteByIdStreamProvider($noteId): $e\n$stackTrace');
+    // print('Error watching noteDaoProvider in noteByIdStreamProvider($noteId): $e\n$stackTrace');
     return Stream.error(e, stackTrace);
   }
 }); 
