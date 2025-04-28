@@ -65,9 +65,20 @@ dev_dependencies:
   drift_dev: ^2.17.0
   riverpod_generator: ^2.4.0
   mocktail: ^1.0.3
+  flutter_launcher_icons: ^0.14.3
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
+
+# --- Flutter Launcher Icons Config ---
+flutter_launcher_icons:
+  android: true # Enable generation for Android
+  ios: false # Set to true if you want iOS icons later
+  image_path: "assets/icons/android/playstore-icon.png"
+  # Optional: Specify adaptive icon settings if needed
+  # adaptive_icon_background: "#ffffff" 
+  # adaptive_icon_foreground: "assets/icons/adaptive_foreground.png"
+# --- End Flutter Launcher Icons Config ---
 
 # The following section is specific to Flutter packages.
 flutter:
@@ -78,7 +89,8 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
+  assets:
+    - assets/ # Declare the assets directory
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
 
