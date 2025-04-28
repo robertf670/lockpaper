@@ -1,0 +1,120 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:lockpaper/core/application/app_lock_provider.dart';
+import 'package:lockpaper/core/presentation/screens/lock_screen.dart';
+import 'package:lockpaper/core/security/biometrics_service.dart';
+import 'package:lockpaper/core/security/encryption_key_service.dart';
+import 'package:lockpaper/features/notes/data/app_database.dart'; // For encryptionKeyProvider
+import 'package:mockito/annotations.dart';
+import 'package:mockito/mockito.dart';
+
+// Generate mocks for services if needed for interaction testing
+@GenerateMocks([BiometricsService, EncryptionKeyService])
+import 'lock_screen_test.mocks.dart';
+
+void main() {
+  // Mocks for dependencies
+  late MockBiometricsService mockBiometricsService;
+  late MockEncryptionKeyService mockEncryptionKeyService;
+
+  setUp(() {
+    mockBiometricsService = MockBiometricsService();
+    mockEncryptionKeyService = MockEncryptionKeyService();
+    // No mocks set up globally here
+  });
+
+  // Helper function to build the LockScreen within a testable environment
+  Widget createTestableWidget(VoidCallback? onUnlockedCallback) {
+    return ProviderScope(
+      overrides: [
+        // Override providers LockScreen depends on
+        appLockStateProvider.overrideWith((ref) => true), // Start locked
+        biometricsServiceProvider.overrideWithValue(mockBiometricsService),
+        encryptionKeyServiceProvider.overrideWithValue(mockEncryptionKeyService),
+        // Provide an initial null state for the key, LockScreen itself handles this
+        encryptionKeyProvider.overrideWith((ref) => null),
+      ],
+      child: MaterialApp(
+        home: LockScreen(onUnlocked: onUnlockedCallback ?? () {}), // Provide a dummy callback
+      ),
+    );
+  }
+
+  group('LockScreen Widget Tests', () {
+    // Test initial state
+    testWidgets('Initial state shows waiting message and auth button', (WidgetTester tester) async {
+      // Arrange: No specific mocks needed just to show the initial UI
+
+      // Build the widget
+      await tester.pumpWidget(createTestableWidget(null));
+
+      // Assert
+      expect(find.text('Waiting for authentication...'), findsOneWidget);
+      expect(find.text('Authenticate with biometrics'), findsOneWidget);
+      expect(find.byIcon(Icons.fingerprint), findsOneWidget);
+    });
+
+    testWidgets('Tapping authenticate button triggers auth flow and calls onUnlocked on success', (WidgetTester tester) async {
+      // Arrange
+      bool unlocked = false;
+      VoidCallback testOnUnlocked = () => unlocked = true;
+
+      // Set up mocks for the flow triggered specifically by the TAP
+      // canAuthenticate needs to be true for the button press to proceed
+      when(mockBiometricsService.canAuthenticate).thenAnswer((_) async => true);
+      when(mockBiometricsService.authenticate(any)).thenAnswer((_) async => true); 
+      when(mockEncryptionKeyService.hasStoredKey()).thenAnswer((_) async => true);
+      when(mockEncryptionKeyService.getDatabaseKey()).thenAnswer((_) async => 'mock_key');
+
+      // Build the widget
+      await tester.pumpWidget(createTestableWidget(testOnUnlocked));
+      await tester.pumpAndSettle(); // Ensure initial build completes
+
+      // Act: Tap the button
+      await tester.tap(find.byIcon(Icons.fingerprint));
+      await tester.pumpAndSettle(); // Allow async operations from tap to complete
+
+      // Assert: Verify the sequence triggered by the tap
+      // We expect canAuthenticate to be checked first inside _authenticate
+      verify(mockBiometricsService.canAuthenticate).called(1);
+      verify(mockBiometricsService.authenticate(any)).called(1);
+      verify(mockEncryptionKeyService.hasStoredKey()).called(1);
+      verify(mockEncryptionKeyService.getDatabaseKey()).called(1);
+      expect(unlocked, isTrue);
+    });
+
+    // Test for resume trigger (separate test)
+    testWidgets('Resuming app triggers auth flow and calls onUnlocked on success', (WidgetTester tester) async {
+       // Arrange
+      bool unlocked = false;
+      VoidCallback testOnUnlocked = () => unlocked = true;
+
+      // Set up mocks for the flow triggered specifically by RESUME
+      // canAuthenticate needs to be true for the resume trigger to proceed
+      when(mockBiometricsService.canAuthenticate).thenAnswer((_) async => true);
+      when(mockBiometricsService.authenticate(any)).thenAnswer((_) async => true); 
+      when(mockEncryptionKeyService.hasStoredKey()).thenAnswer((_) async => true);
+      when(mockEncryptionKeyService.getDatabaseKey()).thenAnswer((_) async => 'mock_key');
+
+      // Build the widget
+      await tester.pumpWidget(createTestableWidget(testOnUnlocked));
+      await tester.pumpAndSettle(); // Ensure initial build completes
+
+      // Act: Simulate resume AFTER initial build
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pumpAndSettle(); // Allow async operations from resume trigger to complete
+      
+      // Assert: Verify the sequence triggered by resume
+      // We expect canAuthenticate to be checked first inside _authenticate (called by didChangeAppLifecycleState)
+      verify(mockBiometricsService.canAuthenticate).called(1); 
+      verify(mockBiometricsService.authenticate(any)).called(1);
+      verify(mockEncryptionKeyService.hasStoredKey()).called(1);
+      verify(mockEncryptionKeyService.getDatabaseKey()).called(1);
+      expect(unlocked, isTrue);
+    });
+
+    // TODO: Add tests for authentication flow (failure, error)
+    // TODO: Test button disabling while authenticating
+  });
+} 

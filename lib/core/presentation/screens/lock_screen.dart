@@ -34,15 +34,6 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
     if (WidgetsBinding.instance.lifecycleState != null) {
       _appLifecycleState = WidgetsBinding.instance.lifecycleState;
       print('[LockScreen initState] Initial Lifecycle State: $_appLifecycleState');
-      // Attempt initial auth only if starting in resumed state
-      if (_appLifecycleState == AppLifecycleState.resumed) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (mounted) { // Check mount status inside callback
-             print('[LockScreen initState] Post-frame check, calling _authenticate.');
-            _authenticate();
-          }
-        });
-      }
     }
   }
 
@@ -86,17 +77,14 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
     _isAuthenticating = true; 
     // --- END IMMEDIATE GUARD ---
 
-    // Check lifecycle state *before* proceeding further
-    if (_appLifecycleState != AppLifecycleState.resumed) {
-      print('[LockScreen _authenticate] Skipped: App not resumed ($_appLifecycleState).');
-       _isAuthenticating = false; // Reset flag if skipping
-      return;
-    }
-    // Reset the build trigger flag at the start of authentication attempt
-    // _authTriggeredThisBuild = false; // REMOVED (Not needed anymore)
-    // if (!mounted || _isAuthenticating) return; // MOVED TO TOP
+    // REMOVED Check for resumed state within authenticate - rely on triggers
+    // if (_appLifecycleState != AppLifecycleState.resumed) {
+    //   print('[LockScreen _authenticate] Skipped: App not resumed ($_appLifecycleState).');
+    //    _isAuthenticating = false; // Reset flag if skipping
+    //   return;
+    // }
+    
     print('[LockScreen _authenticate] Called.'); // Simplified log
-    // if (_isAuthenticating) return; // MOVED TO TOP
 
     // Update status *after* confirming we are proceeding
     setState(() {
@@ -104,19 +92,20 @@ class _LockScreenState extends ConsumerState<LockScreen> with WidgetsBindingObse
       _status = 'Authenticating...';
     });
 
-    final biometricsService = ref.read(biometricsServiceProvider);
+    final service = ref.read(biometricsServiceProvider);
     final keyService = ref.read(encryptionKeyServiceProvider);
     bool authenticated = false;
     try {
-      final bool canAuth = await biometricsService.canAuthenticate;
+      final bool canAuth = await service.canAuthenticate;
       print('[LockScreen _authenticate] canAuthenticate result: $canAuth');
 
-      // Explicitly check device support again right before authenticating
-      final bool deviceSupported = await LocalAuthentication().isDeviceSupported();
-      print('[LockScreen _authenticate] isDeviceSupported result: $deviceSupported');
+      // REMOVED Explicit check for device support - now part of canAuthenticate
+      // final bool deviceSupported = await LocalAuthentication().isDeviceSupported();
+      // print('[LockScreen _authenticate] isDeviceSupported result: $deviceSupported');
 
-      if (canAuth && deviceSupported) { // Check both flags
-        authenticated = await biometricsService.authenticate('Please authenticate to access your notes');
+      // if (canAuth && deviceSupported) { // Old check
+      if (canAuth) { // Simplified check relying on BiometricsService
+        authenticated = await service.authenticate('Please authenticate to access your notes');
         print('[LockScreen _authenticate] authenticate result: $authenticated');
         if (authenticated) {
           print('[LockScreen _authenticate] Authentication successful. Handling encryption key...');
