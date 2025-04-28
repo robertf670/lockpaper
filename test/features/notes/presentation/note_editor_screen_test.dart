@@ -163,7 +163,45 @@ void main() {
       await testWidgetResult.controller.close();
     });
 
-    // TODO: Test saving new note
+    testWidgets('Saves a new note and pops the screen', (WidgetTester tester) async {
+      // Arrange
+      // Mock the insertNote method to simulate successful creation
+      when(() => mockNoteDao.insertNote(any()))
+          .thenAnswer((_) async => 1); // Return a dummy ID
+
+      final testWidgetResult = createTestableWidget(
+        noteId: null, // New note
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      await tester.pumpAndSettle();
+
+      // Act
+      // Enter text into the title and body fields
+      await tester.enterText(find.byKey(const Key('note_title_field')), 'New Title');
+      await tester.enterText(find.byKey(const Key('note_body_field')), 'New Body');
+      await tester.pump(); // Allow state to update
+
+      // Tap the save button (using the correct icon)
+      await tester.tap(find.byIcon(Icons.save_alt_outlined));
+      await tester.pumpAndSettle(); // Wait for async operations like save and pop
+
+      // Assert
+      // Verify that insertNote was called with the correct data
+      final captured = verify(() => mockNoteDao.insertNote(captureAny())).captured;
+      expect(captured.length, 1);
+      final companion = captured.first as NotesCompanion;
+      expect(companion.title.value, 'New Title');
+      expect(companion.body.value, 'New Body');
+
+      // Verify that the screen was popped
+      verify(() => mockGoRouter.pop()).called(1);
+
+      // Clean up (controller not really used here, but good practice)
+      await testWidgetResult.controller.close();
+    });
+
     // TODO: Test updating existing note
     // TODO: Test deleting existing note (including dialog)
     // TODO: Test preventing saving empty note

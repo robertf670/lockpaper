@@ -191,10 +191,11 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       });
     }
 
-    // Wrap the Scaffold with the Hero widget
-    return Hero(
-      tag: 'fab', // Use the SAME tag as the FAB
-      child: Scaffold(
+    // REMOVED Hero widget wrapping Scaffold
+    // return Hero(
+    //   tag: 'fab', // Use the SAME tag as the FAB
+    //   child: Scaffold(
+    return Scaffold(
         appBar: AppBar(
           title: Text(isNewNote ? 'New Note' : 'Edit Note'),
           // Show actions only when data is loaded or when creating a new note
@@ -230,6 +231,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextField(
+                      key: const Key('note_title_field'),
                       decoration: const InputDecoration(hintText: 'Title'),
                       controller: _titleController,
                       textCapitalization: TextCapitalization.sentences,
@@ -242,6 +244,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
                       // Adjust height as needed, or use MediaQuery
                       height: MediaQuery.of(context).size.height * 0.5,
                       child: TextField(
+                        key: const Key('note_body_field'),
                         decoration: const InputDecoration(
                           hintText: 'Note content...',
                           border: InputBorder.none,
@@ -259,7 +262,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
             );
           },
         ),
-      ),
+      // ),
     );
   }
 } 
