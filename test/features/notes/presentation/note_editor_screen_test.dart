@@ -249,7 +249,50 @@ void main() {
       await testWidgetResult.controller.close();
     });
 
-    // TODO: Test deleting existing note (including dialog)
+    testWidgets('Deletes an existing note after confirmation and pops', (WidgetTester tester) async {
+      // Arrange
+      // Mock deleteNote to simulate success
+      when(() => mockNoteDao.deleteNote(any())).thenAnswer((_) async => 1);
+
+      final testWidgetResult = createTestableWidget(
+        noteId: testNote.id, // Existing note ID
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+
+      // Emit initial data
+      testWidgetResult.controller.add(testNote);
+      await tester.pumpAndSettle();
+
+      // Act
+      // Tap the delete icon
+      expect(find.byIcon(Icons.delete_outline), findsOneWidget); // Ensure delete icon is present
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.pumpAndSettle(); // Allow dialog to show
+
+      // Confirm deletion in the dialog
+      expect(find.byType(AlertDialog), findsOneWidget);
+      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.pumpAndSettle(); // Wait for delete and pop
+
+      // Assert
+      // Verify deleteNote call
+      final captured = verify(() => mockNoteDao.deleteNote(captureAny())).captured;
+      expect(captured.length, 1);
+      final companion = captured.first as NotesCompanion;
+      expect(companion.id.value, testNote.id); // Verify ID
+      // Other fields should be absent for delete
+      expect(companion.title.present, isFalse);
+      expect(companion.body.present, isFalse);
+
+      // Verify pop call
+      verify(() => mockGoRouter.pop()).called(1);
+
+      // Clean up
+      await testWidgetResult.controller.close();
+    });
+
     // TODO: Test preventing saving empty note
   });
 } 
