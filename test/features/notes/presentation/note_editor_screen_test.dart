@@ -202,7 +202,53 @@ void main() {
       await testWidgetResult.controller.close();
     });
 
-    // TODO: Test updating existing note
+    testWidgets('Updates an existing note and pops the screen', (WidgetTester tester) async {
+      // Arrange
+      // Mock updateNote to simulate success
+      when(() => mockNoteDao.updateNote(any())).thenAnswer((_) async => true);
+
+      final testWidgetResult = createTestableWidget(
+        noteId: testNote.id, // Existing note ID
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+
+      // Emit initial data
+      testWidgetResult.controller.add(testNote);
+      await tester.pumpAndSettle();
+
+      // Act
+      // Enter new text
+      const updatedTitle = 'Updated Title';
+      const updatedBody = 'Updated Body';
+      await tester.enterText(find.byKey(const Key('note_title_field')), updatedTitle);
+      await tester.enterText(find.byKey(const Key('note_body_field')), updatedBody);
+      await tester.pump(); // Allow state to update
+
+      // Tap save
+      await tester.tap(find.byIcon(Icons.save_alt_outlined));
+      await tester.pumpAndSettle(); // Wait for save and pop
+
+      // Assert
+      // Verify updateNote call
+      final captured = verify(() => mockNoteDao.updateNote(captureAny())).captured;
+      expect(captured.length, 1);
+      final companion = captured.first as NotesCompanion;
+      expect(companion.id.value, testNote.id);
+      expect(companion.title.value, updatedTitle);
+      expect(companion.body.value, updatedBody);
+      // Check that updatedAt is present (since it's set during update)
+      expect(companion.updatedAt.present, isTrue);
+      expect(companion.updatedAt.value, isNotNull);
+
+      // Verify pop call
+      verify(() => mockGoRouter.pop()).called(1);
+
+      // Clean up
+      await testWidgetResult.controller.close();
+    });
+
     // TODO: Test deleting existing note (including dialog)
     // TODO: Test preventing saving empty note
   });
