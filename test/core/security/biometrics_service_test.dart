@@ -1,17 +1,23 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:lockpaper/core/security/biometrics_service.dart';
-import 'package:mockito/annotations.dart';
-import 'package:mockito/mockito.dart';
 import 'package:flutter/services.dart'; // For PlatformException
+import 'package:mocktail/mocktail.dart'; // Import mocktail
 
-// Mocks are now generated via test/mocks/core_mocks.dart
-// @GenerateMocks([LocalAuthentication]) 
-import '../../mocks/core_mocks.mocks.dart'; // Correct relative path
+// Define mock using mocktail
+class MockLocalAuthentication extends Mock implements LocalAuthentication {}
+
+// Define a dummy AuthenticationOptions for fallback registration
+class FakeAuthenticationOptions extends Fake implements AuthenticationOptions {}
 
 void main() {
   late MockLocalAuthentication mockAuth;
   late BiometricsService biometricsService;
+
+  // Register fallback value for AuthenticationOptions before tests run
+  setUpAll(() {
+    registerFallbackValue(FakeAuthenticationOptions());
+  });
 
   setUp(() {
     mockAuth = MockLocalAuthentication();
@@ -23,97 +29,94 @@ void main() {
     group('canAuthenticate', () {
       test('should return true if canCheckBiometrics and isDeviceSupported are true', () async {
         // Arrange
-        when(mockAuth.canCheckBiometrics).thenAnswer((_) async => true);
-        when(mockAuth.isDeviceSupported()).thenAnswer((_) async => true);
+        when(() => mockAuth.canCheckBiometrics).thenAnswer((_) => Future.value(true));
+        when(() => mockAuth.isDeviceSupported()).thenAnswer((_) => Future.value(true));
         
         // Act
         final result = await biometricsService.canAuthenticate;
 
         // Assert
         expect(result, isTrue);
-        verify(mockAuth.canCheckBiometrics).called(1);
-        verify(mockAuth.isDeviceSupported()).called(1);
+        verify(() => mockAuth.canCheckBiometrics).called(1);
+        verify(() => mockAuth.isDeviceSupported()).called(1);
       });
 
       test('should return false if canCheckBiometrics is false', () async {
         // Arrange
-        when(mockAuth.canCheckBiometrics).thenAnswer((_) async => false);
-        when(mockAuth.isDeviceSupported()).thenAnswer((_) async => true); // Still need to mock this
+        when(() => mockAuth.canCheckBiometrics).thenAnswer((_) => Future.value(false));
+        when(() => mockAuth.isDeviceSupported()).thenAnswer((_) => Future.value(true)); // Still need to mock this
 
         // Act
         final result = await biometricsService.canAuthenticate;
 
         // Assert
         expect(result, isFalse);
-         verify(mockAuth.canCheckBiometrics).called(1);
-        verify(mockAuth.isDeviceSupported()).called(1); // Verify it was checked
+        verify(() => mockAuth.canCheckBiometrics).called(1);
+        verify(() => mockAuth.isDeviceSupported()).called(1); // Verify it was checked
       });
 
       test('should return false if isDeviceSupported is false', () async {
         // Arrange
-        // when(mockAuth.canCheckBiometrics).thenAnswer((_) async => true); // No need to mock this if isDeviceSupported is false
-        when(mockAuth.isDeviceSupported()).thenAnswer((_) async => false);
+        when(() => mockAuth.isDeviceSupported()).thenAnswer((_) => Future.value(false));
 
         // Act
         final result = await biometricsService.canAuthenticate;
 
         // Assert
         expect(result, isFalse);
-        // verify(mockAuth.canCheckBiometrics).called(1); // Should not be called if device not supported
-         verify(mockAuth.isDeviceSupported()).called(1);
+        verify(() => mockAuth.isDeviceSupported()).called(1);
       });
     });
 
     group('authenticate', () {
        const testReason = 'Test authentication';
-       // Helper to create common AuthenticationOptions
-       const expectedOptions = AuthenticationOptions(
-         stickyAuth: true,
-         biometricOnly: false,
-       );
+       // Define expected options matcher using mocktail
+       final expectedOptionsMatcher = isA<AuthenticationOptions>()
+           .having((o) => o.stickyAuth, 'stickyAuth', true)
+           .having((o) => o.biometricOnly, 'biometricOnly', false);
 
       test('should return true on successful authentication', () async {
         // Arrange
-        when(mockAuth.authenticate(
+        when(() => mockAuth.authenticate(
           localizedReason: testReason,
-          options: expectedOptions
-        )).thenAnswer((_) async => true);
+          options: any(named: 'options', that: expectedOptionsMatcher)
+        )).thenAnswer((_) => Future.value(true));
 
         // Act
         final result = await biometricsService.authenticate(testReason);
 
         // Assert
         expect(result, isTrue);
-        verify(mockAuth.authenticate(
+        verify(() => mockAuth.authenticate(
           localizedReason: testReason,
-          options: expectedOptions
+          options: any(named: 'options', that: expectedOptionsMatcher)
         )).called(1);
       });
 
       test('should return false on failed authentication', () async {
         // Arrange
-         when(mockAuth.authenticate(
+        when(() => mockAuth.authenticate(
           localizedReason: testReason,
-          options: expectedOptions
-        )).thenAnswer((_) async => false);
+          options: any(named: 'options', that: expectedOptionsMatcher)
+        )).thenAnswer((_) => Future.value(false));
 
         // Act
         final result = await biometricsService.authenticate(testReason);
 
         // Assert
         expect(result, isFalse);
-         verify(mockAuth.authenticate(
+        verify(() => mockAuth.authenticate(
           localizedReason: testReason,
-          options: expectedOptions
+          options: any(named: 'options', that: expectedOptionsMatcher)
         )).called(1);
       });
 
       test('should return false on PlatformException error', () async {
         // Arrange
         final platformException = PlatformException(code: 'TestError');
-        when(mockAuth.authenticate(
+        when(() => mockAuth.authenticate(
           localizedReason: testReason,
-          options: expectedOptions
+          options: any(named: 'options', that: expectedOptionsMatcher)
         )).thenThrow(platformException);
 
         // Act 
@@ -122,9 +125,9 @@ void main() {
         // Assert
         expect(result, isFalse);
 
-         verify(mockAuth.authenticate(
+        verify(() => mockAuth.authenticate(
           localizedReason: testReason,
-          options: expectedOptions
+          options: any(named: 'options', that: expectedOptionsMatcher)
         )).called(1);
       });
     });

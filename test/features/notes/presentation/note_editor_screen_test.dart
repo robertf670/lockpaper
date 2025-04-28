@@ -328,5 +328,168 @@ void main() {
       testWidgetResult.controller.close(); // Close even if not used
     });
 
+    // --- BACK NAVIGATION TESTS ---
+
+    testWidgets('Tapping back button on New Note screen pops without saving', (WidgetTester tester) async {
+      // Arrange
+      final testWidgetResult = createTestableWidget(
+        noteId: null, // New note
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      await tester.pumpAndSettle();
+
+      // Enter some text (but don't save)
+      await tester.enterText(find.byKey(const Key('note_title_field')), 'Unsaved Title');
+      await tester.pump();
+
+      // Act: Simulate back navigation directly via mock router
+      mockGoRouter.pop(); // Simulate pop directly
+      await tester.pumpAndSettle();
+
+      // Assert
+      verifyNever(() => mockNoteDao.insertNote(any())); // Ensure save was NOT called
+      verify(() => mockGoRouter.pop()).called(1); // Ensure pop was called
+
+      await testWidgetResult.controller.close();
+    });
+
+    testWidgets('Tapping back button on Edit Note screen with NO changes pops without saving', (WidgetTester tester) async {
+      // Arrange
+      final testWidgetResult = createTestableWidget(
+        noteId: testNote.id, // Existing note
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      // Emit initial data
+      testWidgetResult.controller.add(testNote);
+      await tester.pumpAndSettle();
+
+      // Act: Simulate back navigation directly via mock router
+      mockGoRouter.pop(); // Simulate pop directly
+      await tester.pumpAndSettle();
+
+      // Assert
+      verifyNever(() => mockNoteDao.updateNote(any())); // Ensure update was NOT called
+      verify(() => mockGoRouter.pop()).called(1); // Ensure pop was called
+
+      await testWidgetResult.controller.close();
+    });
+
+     testWidgets('Tapping back button on Edit Note screen WITH changes pops without saving', (WidgetTester tester) async {
+      // Arrange
+      final testWidgetResult = createTestableWidget(
+        noteId: testNote.id, // Existing note
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      // Emit initial data
+      testWidgetResult.controller.add(testNote);
+      await tester.pump();
+
+      // Act: Simulate back navigation directly via mock router
+      mockGoRouter.pop(); // Simulate pop directly
+      await tester.pumpAndSettle();
+
+      // Assert
+      verifyNever(() => mockNoteDao.updateNote(any())); // Ensure update was NOT called
+      verify(() => mockGoRouter.pop()).called(1); // Ensure pop was called
+
+      await testWidgetResult.controller.close();
+    });
+
+    // --- ERROR HANDLING TESTS ---
+
+    testWidgets('Shows error SnackBar if saving new note fails', (WidgetTester tester) async {
+      // Arrange
+      final testError = Exception('DAO insert failed');
+      when(() => mockNoteDao.insertNote(any())).thenThrow(testError);
+
+      final testWidgetResult = createTestableWidget(
+        noteId: null, 
+        mockGoRouter: mockGoRouter, 
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      await tester.pumpAndSettle();
+
+      // Act
+      await tester.enterText(find.byKey(const Key('note_title_field')), 'Error Title');
+      await tester.enterText(find.byKey(const Key('note_body_field')), 'Error Body');
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.save_alt_outlined));
+      await tester.pumpAndSettle(); // Allow SnackBar to show
+
+      // Assert
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.textContaining('Error saving note: $testError'), findsOneWidget);
+      verifyNever(() => mockGoRouter.pop()); // Ensure no navigation occurred
+
+      await testWidgetResult.controller.close();
+    });
+
+    testWidgets('Shows error SnackBar if updating existing note fails', (WidgetTester tester) async {
+      // Arrange
+      final testError = Exception('DAO update failed');
+      when(() => mockNoteDao.updateNote(any())).thenThrow(testError);
+
+      final testWidgetResult = createTestableWidget(
+        noteId: testNote.id,
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      testWidgetResult.controller.add(testNote);
+      await tester.pumpAndSettle();
+
+      // Act
+      await tester.enterText(find.byKey(const Key('note_title_field')), 'Error Update Title');
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.save_alt_outlined));
+      await tester.pumpAndSettle();
+
+      // Assert
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.textContaining('Error saving note: $testError'), findsOneWidget);
+      verifyNever(() => mockGoRouter.pop());
+
+      await testWidgetResult.controller.close();
+    });
+
+    testWidgets('Shows error SnackBar if deleting existing note fails', (WidgetTester tester) async {
+      // Arrange
+      final testError = Exception('DAO delete failed');
+      when(() => mockNoteDao.deleteNote(any())).thenThrow(testError);
+
+       final testWidgetResult = createTestableWidget(
+        noteId: testNote.id,
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      testWidgetResult.controller.add(testNote);
+      await tester.pumpAndSettle();
+
+      // Act
+      // Tap delete icon
+      await tester.tap(find.byIcon(Icons.delete_outline));
+      await tester.pumpAndSettle(); // Show dialog
+      // Tap confirm delete
+      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.pumpAndSettle(); // Process delete attempt and show SnackBar
+
+      // Assert
+      expect(find.byType(SnackBar), findsOneWidget);
+      expect(find.textContaining('Error deleting note: $testError'), findsOneWidget);
+      verifyNever(() => mockGoRouter.pop());
+      
+      await testWidgetResult.controller.close();
+    });
+
+
+    // TODO: Add tests for delete confirmation dialog (Cancel button)
   });
 } 
