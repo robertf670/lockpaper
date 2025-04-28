@@ -77,10 +77,6 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    if (WidgetsBinding.instance.lifecycleState != null) {
-      _appLifecycleState = WidgetsBinding.instance.lifecycleState;
-      // print('[MyApp initState] Initial Lifecycle State: $_appLifecycleState');
-    }
   }
 
   @override
@@ -89,12 +85,10 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  AppLifecycleState? _appLifecycleState;
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     // print('[MyApp didChangeAppLifecycleState] State: $state');
-    _appLifecycleState = state; // Update state here
 
     final isCurrentlyLocked = ref.read(appLockStateProvider);
     if ((state == AppLifecycleState.paused || state == AppLifecycleState.inactive) &&

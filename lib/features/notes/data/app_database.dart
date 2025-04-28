@@ -17,7 +17,7 @@ part 'app_database.g.dart';
 @DriftAccessor(tables: [Notes])
 class NoteDao extends DatabaseAccessor<AppDatabase> with _$NoteDaoMixin {
   /// Creates the DAO.
-  NoteDao(AppDatabase db) : super(db);
+  NoteDao(super.db);
 
   /// Watches all notes, ordered by creation date descending.
   Stream<List<Note>> watchAllNotes() =>

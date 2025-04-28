@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:lockpaper/features/notes/application/database_providers.dart';
 // import 'package:lockpaper/features/notes/data/app_database.dart'; // Unused
 import 'package:lockpaper/features/notes/presentation/screens/note_editor_screen.dart'; // Import for route name
+import 'package:flutter_markdown/flutter_markdown.dart'; // Add this import
 
 /// Screen that displays the list of notes.
 class NotesListScreen extends ConsumerWidget {
@@ -42,10 +43,10 @@ class NotesListScreen extends ConsumerWidget {
                 excludeSemantics: true, // Prevent child text being read separately
                 child: ListTile(
                   title: Text(note.title.isNotEmpty ? note.title : 'Untitled Note'),
-                  subtitle: Text(
-                    note.body,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+                  subtitle: MarkdownBody( // Replace Text with MarkdownBody
+                    data: note.body,
+                    shrinkWrap: true, // Important within lists
+                    // Consider adding style or constraints if needed later
                   ),
                   // Navigate to editor on tap
                   onTap: () {

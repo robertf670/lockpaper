@@ -3,6 +3,7 @@ import 'package:local_auth/local_auth.dart';
 import 'package:lockpaper/core/security/biometrics_service.dart';
 import 'package:flutter/services.dart'; // For PlatformException
 import 'package:mocktail/mocktail.dart'; // Import mocktail
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Define mock using mocktail
 class MockLocalAuthentication extends Mock implements LocalAuthentication {}
@@ -10,9 +11,13 @@ class MockLocalAuthentication extends Mock implements LocalAuthentication {}
 // Define a dummy AuthenticationOptions for fallback registration
 class FakeAuthenticationOptions extends Fake implements AuthenticationOptions {}
 
+// --- Add Mock Ref ---
+class MockRef extends Mock implements Ref {}
+
 void main() {
   late MockLocalAuthentication mockAuth;
   late BiometricsService biometricsService;
+  late MockRef mockRef; // Add mock ref variable
 
   // Register fallback value for AuthenticationOptions before tests run
   setUpAll(() {
@@ -21,8 +26,9 @@ void main() {
 
   setUp(() {
     mockAuth = MockLocalAuthentication();
-    // Inject the mock LocalAuthentication instance
-    biometricsService = BiometricsService(mockAuth);
+    mockRef = MockRef(); // Instantiate mock ref
+    // Inject the mock LocalAuthentication instance and mock Ref
+    biometricsService = BiometricsService(mockAuth, mockRef);
   });
 
   group('BiometricsService Tests', () {

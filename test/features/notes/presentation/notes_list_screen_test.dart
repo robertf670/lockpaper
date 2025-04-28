@@ -55,10 +55,11 @@ void main() {
     notesStreamController = StreamController<List<Note>>(); // Create controller
     mockNoteDao = MockNoteDao(); // Initialize DAO mock
 
-    // Setup default GoRouter behavior
-    when(() => mockGoRouter.go(any())).thenAnswer((_) async {}); 
-    when(() => mockGoRouter.push(any())).thenAnswer((_) async {}); 
-    when(() => mockGoRouter.goNamed(any(), pathParameters: any(named: 'pathParameters'))).thenAnswer((_) async {});
+    // Setup default GoRouter behavior with explicit Future<void> returns
+    when(() => mockGoRouter.go(any())).thenAnswer((_) async => Future<void>.value()); 
+    when(() => mockGoRouter.push(any())).thenAnswer((_) async => Future<void>.value()); 
+    when(() => mockGoRouter.goNamed(any(), pathParameters: any(named: 'pathParameters')))
+        .thenAnswer((_) async => Future<void>.value());
 
   });
 
