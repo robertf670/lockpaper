@@ -7,7 +7,7 @@ import 'package:flutter/services.dart'; // For PlatformException
 
 // Mocks are now generated via test/mocks/core_mocks.dart
 // @GenerateMocks([LocalAuthentication]) 
-import '../mocks/core_mocks.mocks.dart'; // Import central generated mocks
+import '../../mocks/core_mocks.mocks.dart'; // Correct relative path
 
 void main() {
   late MockLocalAuthentication mockAuth;

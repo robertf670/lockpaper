@@ -48,3 +48,6 @@ app.*.map.json
 plan.md
 
 /assets/
+
+# Session state file (not part of project)
+/future.txt

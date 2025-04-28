@@ -1,0 +1,42 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Using Ubuntu as it's common for CI and allows apt-get
+
+    steps:
+      - uses: actions/checkout@v4 # Checks-out your repository under $GITHUB_WORKSPACE
+
+      # Needed for sqlcipher_flutter_libs on Linux runners
+      - name: Install sqlcipher
+        run: sudo apt-get update && sudo apt-get install -y sqlcipher libsqlite3-dev
+
+      - uses: subosito/flutter-action@v2 # Sets up Flutter SDK
+        with:
+          flutter-version: '3.29' # Match project version from plan.md if possible, else use a recent stable one
+          channel: 'stable'
+          cache: true # Enable caching for faster builds
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze project source
+        run: flutter analyze
+
+      - name: Run tests
+        # We need to ensure the test environment can find the sqlcipher library.
+        # Setting LD_LIBRARY_PATH might be necessary. Let's try running directly first.
+        run: flutter test --no-pub --coverage # Added coverage flag
+
+      # Optional: Add step to collect coverage data if needed
+      # - name: Upload coverage reports to Codecov
+      #   uses: codecov/codecov-action@v3
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }} # Add CODECOV_TOKEN to repo secrets
+      #     files: coverage/lcov.info 

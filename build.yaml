@@ -9,6 +9,11 @@ targets:
         generate_for:
           # Only include files in the lib directory
           - lib/**
+      # Explicitly configure mockito builder again
+      mockito|mockBuilder:
+        enabled: true
+        generate_for:
+          - test/mocks/core_mocks.dart # Target the specific file
         # options: # Default options, can be customized if needed
           # provider_name_suffix: 'Provider'
           # provider_name_prefix: '_'
