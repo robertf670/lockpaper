@@ -1,58 +1,134 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:animations/animations.dart'; // Import animations package
+import 'package:flutter_riverpod/flutter_riverpod.dart'; // Import Riverpod
 
-// Import screens
+// Import screens and providers
 import 'package:lockpaper/features/notes/presentation/screens/notes_list_screen.dart';
 import 'package:lockpaper/features/notes/presentation/screens/note_editor_screen.dart'; // Import editor
+import 'package:lockpaper/core/presentation/screens/pin_setup/confirm_pin_screen.dart';
+import 'package:lockpaper/core/presentation/screens/pin_setup/create_pin_screen.dart';
+import 'package:lockpaper/core/presentation/screens/lock_screen.dart'; // Import LockScreen
+import 'package:lockpaper/core/application/app_lock_provider.dart'; // Import lock provider
 
 /// Defines the application's routes using GoRouter.
 class AppRouter {
-  static final GoRouter router = GoRouter(
-    initialLocation: '/',
-    debugLogDiagnostics: true, // Enable GoRouter logging for debugging
-    routes: <RouteBase>[
-      GoRoute(
-        path: '/',
-        name: NotesListScreen.routeName, // Use name from screen
-        builder: (BuildContext context, GoRouterState state) {
-          return const NotesListScreen();
-        },
-        // Nested route for the editor
-        routes: <RouteBase>[
-          GoRoute(
-            path: 'note/:id', // Path param: integer ID or 'new'
-            name: NoteEditorScreen.routeName,
-            // Use pageBuilder for custom transitions
-            pageBuilder: (BuildContext context, GoRouterState state) {
-              final noteIdParam = state.pathParameters['id']!;
-              final int? noteId = noteIdParam == 'new' ? null : int.tryParse(noteIdParam);
+  // Make router accept Ref
+  static GoRouter getRouter(WidgetRef ref) {
+    // Define route names centrally (optional but good practice)
+    const lockRoute = '/lock';
+    const notesPath = '/'; // Use path consistently for logic
+    final notesRouteName = NotesListScreen.routeName; // Keep for name property if needed
+    final createPinRoute = CreatePinScreen.routeName;
+    final confirmPinRoute = ConfirmPinScreen.routeName;
+    
+    // Paths that don't require authentication or are part of the auth flow
+    final unauthenticatedPaths = {lockRoute, createPinRoute, confirmPinRoute};
 
-              return CustomTransitionPage(
-                key: state.pageKey,
-                child: NoteEditorScreen(noteId: noteId),
-                transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                  // Use FadeThroughTransition
-                  return FadeThroughTransition(
-                    animation: animation,
-                    secondaryAnimation: secondaryAnimation,
-                    child: child,
-                  );
+    return GoRouter(
+      // Change initialLocation? Can be handled by redirect.
+      initialLocation: notesPath, // Use path '/' for initial location
+      debugLogDiagnostics: true,
+      // refreshListenable: // Could potentially use a listenable based on appLockStateProvider
+      redirect: (BuildContext context, GoRouterState state) {
+        final isLocked = ref.read(appLockStateProvider);
+        final currentLocation = state.matchedLocation; // More reliable than location/subloc
+
+        // print('[GoRouter Redirect] Locked: $isLocked, Current: $currentLocation');
+
+        // If locked and not already on an auth path, redirect to lock screen
+        if (isLocked && !unauthenticatedPaths.contains(currentLocation)) {
+          // print('[GoRouter Redirect] Redirecting to $lockRoute');
+          return lockRoute;
+        }
+
+        // If unlocked and currently on the lock screen, redirect to home path
+        if (!isLocked && currentLocation == lockRoute) {
+           // print('[GoRouter Redirect] Redirecting to $notesPath');
+          return notesPath; // Use path '/' for redirect target
+        }
+
+        // No redirect needed
+        return null;
+      },
+      routes: <RouteBase>[
+        GoRoute(
+          path: notesPath, // Use path '/' 
+          name: notesRouteName, // Can keep name 'home' or change to '/' for consistency
+          builder: (BuildContext context, GoRouterState state) {
+            return const NotesListScreen();
+          },
+          routes: <RouteBase>[
+            GoRoute(
+              path: 'note/:id', // Path param: integer ID or 'new'
+              name: NoteEditorScreen.routeName,
+              pageBuilder: (BuildContext context, GoRouterState state) {
+                final noteIdParam = state.pathParameters['id']!;
+                final int? noteId = noteIdParam == 'new' ? null : int.tryParse(noteIdParam);
+
+                return CustomTransitionPage(
+                  key: state.pageKey,
+                  child: NoteEditorScreen(noteId: noteId),
+                  transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                    return FadeThroughTransition(
+                      animation: animation,
+                      secondaryAnimation: secondaryAnimation,
+                      child: child,
+                    );
+                  },
+                );
+              },
+            ),
+          ],
+        ),
+        // PIN Setup Routes
+        GoRoute(
+          path: CreatePinScreen.routeName,
+          name: CreatePinScreen.routeName,
+          builder: (BuildContext context, GoRouterState state) {
+            return const CreatePinScreen();
+          },
+        ),
+        GoRoute(
+          path: ConfirmPinScreen.routeName,
+          name: ConfirmPinScreen.routeName,
+          builder: (BuildContext context, GoRouterState state) {
+            final initialPin = state.extra as String?;
+            if (initialPin == null) {
+              print('Error: ConfirmPinScreen called without initialPin argument. Navigating back.');
+              // Use context.pop() if within the router's context
+              WidgetsBinding.instance.addPostFrameCallback((_) { 
+                 if (context.canPop()) context.pop(); 
+              });
+              return const Scaffold(body: Center(child: Text("Error: Missing PIN"))); // Show temp error
+            }
+            return ConfirmPinScreen(initialPin: initialPin);
+          },
+        ),
+        // Lock Screen Route
+        GoRoute(
+           path: lockRoute,
+           name: lockRoute, // Use the constant
+           builder: (BuildContext context, GoRouterState state) {
+              // This context *is* within the GoRouter tree
+              return LockScreen(
+                onUnlocked: () {
+                  // Read notifier to change state
+                   ref.read(appLockStateProvider.notifier).state = false;
+                   // Navigate home using path '/' after unlocking
+                   context.go(notesPath);
                 },
-                // Optional: Adjust transition duration
-                // transitionDuration: const Duration(milliseconds: 300),
               );
-            },
-          ),
-        ],
-      ),
-      // TODO: Add routes for settings, lock screen, etc.
-    ],
-    // TODO: Add error handling/navigation observers if needed
-    // errorBuilder: (context, state) => ErrorScreen(state.error),
-  );
+           },
+        ),
+      ],
+      errorBuilder: (context, state) => Scaffold( // Basic error screen
+         body: Center(child: Text('Route Error: ${state.error}')),
+       ),
+    );
+  }
 
-  // Private constructor to prevent instantiation
+  // Private constructor remains
   AppRouter._();
 }
 

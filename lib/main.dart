@@ -106,6 +106,21 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
     final lightTheme = AppTheme.getTheme(widget.lightDynamic, Brightness.light);
     final darkTheme = AppTheme.getTheme(widget.darkDynamic, Brightness.dark);
 
+    // --- Always return MaterialApp.router --- 
+    // Get the router configuration, passing the ref
+    final routerConfig = AppRouter.getRouter(ref);
+
+    // The router's redirect logic now handles showing the LockScreen
+    return MaterialApp.router(
+      title: 'Lockpaper',
+      theme: lightTheme, // Use dynamic or fallback theme
+      darkTheme: darkTheme, // Use dynamic or fallback theme
+      themeMode: ThemeMode.system, 
+      routerConfig: routerConfig, // Use the configured router
+      debugShowCheckedModeBanner: false,
+    );
+
+    /* // OLD LOGIC - REMOVED
     if (isLocked) {
       // Original LockScreen instantiation restored
       return MaterialApp(
@@ -127,9 +142,10 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
         theme: lightTheme, // Use dynamic or fallback theme
         darkTheme: darkTheme, // Use dynamic or fallback theme
         themeMode: ThemeMode.system, 
-        routerConfig: AppRouter.router,
+        routerConfig: AppRouter.router, // Old static router
         debugShowCheckedModeBanner: false,
       );
     }
+    */
   }
 }

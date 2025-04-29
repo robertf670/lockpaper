@@ -53,6 +53,8 @@ dependencies:
   flutter_secure_storage: ^9.2.2
   riverpod_annotation: ^2.3.5
   flutter_markdown: ^0.7.7
+  pinput: ^5.0.1
+  crypt: ^4.3.1
 
 dev_dependencies:
   flutter_test:
@@ -66,6 +68,7 @@ dev_dependencies:
   riverpod_generator: ^2.4.0
   mocktail: ^1.0.3
   flutter_launcher_icons: ^0.14.3
+  build_runner: ^2.4.15
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
