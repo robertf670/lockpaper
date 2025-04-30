@@ -22,11 +22,11 @@ void main() {
   setUp(() {
     mockSecureStorage = MockFlutterSecureStorage();
     mockRef = MockRef();
-    pinStorageService = PinStorageService(mockSecureStorage, mockRef);
+    pinStorageService = PinStorageService(mockSecureStorage);
   });
 
   group('PinStorageService', () {
-    const pinStorageKey = 'app_pin_hash'; // Match key used in service
+    const pinStorageKey = 'app_pin_hash'; // ADD const
 
     group('hasPin', () {
        test('should return true if a PIN hash is stored', () async {

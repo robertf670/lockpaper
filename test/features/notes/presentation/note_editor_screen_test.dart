@@ -84,7 +84,7 @@ void main() {
     when(() => mockGoRouter.canPop()).thenReturn(true);
     when(() => mockGoRouter.goNamed(any(),
             pathParameters: any(named: 'pathParameters')))
-        .thenAnswer((_) async {});
+        .thenAnswer((_) async { return null; });
   });
 
   // Ensure controllers are closed after tests that use them

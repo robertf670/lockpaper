@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lockpaper/core/app_router.dart';
 import 'package:lockpaper/core/app_theme.dart';
 import 'package:lockpaper/core/application/app_lock_provider.dart';
-import 'package:lockpaper/core/presentation/screens/lock_screen.dart';
+// import 'package:lockpaper/core/presentation/screens/lock_screen.dart'; // Remove unused import
 import 'package:sqlite3/open.dart'; // Needed for open.overrideFor
 import 'package:sqlite3/sqlite3.dart'; // Import sqlite3 for tempDirectory
 import 'package:sqlcipher_flutter_libs/sqlcipher_flutter_libs.dart'; // Needed for openCipherOnAndroid and workaround
@@ -13,6 +13,9 @@ import 'package:path_provider/path_provider.dart'; // Import for temp dir
 import 'package:dynamic_color/dynamic_color.dart';
 // import 'package:flex_color_scheme/flex_color_scheme.dart'; // Unused
 // import 'package:go_router/go_router.dart'; // Unused
+import 'package:lockpaper/core/security/encryption_key_service.dart';
+import 'package:lockpaper/core/services/preference_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   // Ensure initialization FIRST

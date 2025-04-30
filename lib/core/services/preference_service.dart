@@ -24,24 +24,22 @@ class PreferenceService {
   }
 }
 
-/// Riverpod provider for the PreferenceService.
-/// Uses FutureProvider since SharedPreferences.getInstance() is async.
-@riverpod
-Future<PreferenceService> preferenceService(PreferenceServiceRef ref) async {
+/// Provider for the PreferenceService itself.
+@Riverpod(keepAlive: true)
+Future<PreferenceService> preferenceService(Ref ref) async {
   final prefs = await SharedPreferences.getInstance();
   return PreferenceService(prefs);
 }
 
-/// Simple provider for the current state of the biometrics preference.
-/// Reads from PreferenceService and handles the async nature.
+/// Simple boolean provider for easy access to the biometrics setting.
 @riverpod
-bool biometricsEnabled(BiometricsEnabledRef ref) {
-  // Watch the async preferenceService provider
-  final prefServiceAsyncValue = ref.watch(preferenceServiceProvider);
-  // Return the value from the service when loaded, default to true otherwise
-  return prefServiceAsyncValue.when(
+bool biometricsEnabled(Ref ref) {
+  // Watch the async preference service provider
+  final preferenceServiceAsyncValue = ref.watch(preferenceServiceProvider);
+  // Return the current value, defaulting to true if loading/error
+  return preferenceServiceAsyncValue.when(
     data: (service) => service.isBiometricsEnabled(),
     loading: () => true, // Default to true while loading
-    error: (_, __) => true, // Default to true on error (safer default?)
+    error: (err, stack) => true, // Default to true on error as well
   );
 } 

@@ -10,9 +10,8 @@ const _pinStorageKey = 'app_pin_hash';
 /// Service for securely storing and verifying the user's PIN.
 class PinStorageService {
   final FlutterSecureStorage _secureStorage;
-  final Ref ref; // Keep Ref if needed for future integrations
 
-  PinStorageService(this._secureStorage, this.ref);
+  PinStorageService(this._secureStorage);
 
   /// Checks if a PIN hash is currently stored.
   Future<bool> hasPin() async {
@@ -21,7 +20,7 @@ class PinStorageService {
       return storedHash != null && storedHash.isNotEmpty;
     } catch (e) {
       // Handle potential storage errors
-      print('Error checking for PIN: $e');
+      // TODO: Replace with proper logging
       return false;
     }
   }
@@ -35,7 +34,7 @@ class PinStorageService {
       await _secureStorage.write(key: _pinStorageKey, value: hash);
     } catch (e) {
       // Handle potential storage/hashing errors
-      print('Error setting PIN: $e');
+      // TODO: Replace with proper logging
       rethrow; // Rethrow to indicate failure
     }
   }
@@ -45,7 +44,7 @@ class PinStorageService {
     try {
       final storedHash = await _secureStorage.read(key: _pinStorageKey);
       if (storedHash == null || storedHash.isEmpty) {
-        print('Verification failed: No PIN set.');
+        // TODO: Replace with proper logging (maybe debug level)
         return false; // No PIN set
       }
 
@@ -53,7 +52,7 @@ class PinStorageService {
       return c.match(enteredPin);
     } catch (e) {
       // Handle potential storage/hashing errors
-      print('Error verifying PIN: $e');
+      // TODO: Replace with proper logging
       return false;
     }
   }
@@ -64,7 +63,7 @@ class PinStorageService {
       await _secureStorage.delete(key: _pinStorageKey);
     } catch (e) {
       // Handle potential storage errors
-      print('Error deleting PIN: $e');
+      // TODO: Replace with proper logging
       rethrow;
     }
   }
@@ -75,5 +74,5 @@ class PinStorageService {
 PinStorageService pinStorageService(Ref ref) {
   // Provide the actual FlutterSecureStorage instance
   // Consider providing FlutterSecureStorage itself via a provider if used elsewhere
-  return PinStorageService(const FlutterSecureStorage(), ref);
+  return PinStorageService(const FlutterSecureStorage());
 } 

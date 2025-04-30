@@ -95,7 +95,6 @@ void main() {
       // Verify navigation occurred using the observer
       Route<dynamic>? pushedRoute;
       String? pushedRouteName;
-      dynamic pushedRouteArgs;
 
       // Capture the last pushed route details
       final captured = verify(() => mockNavigatorObserver.didPush(captureAny(), any())).captured;

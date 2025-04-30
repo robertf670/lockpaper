@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:lockpaper/features/notes/application/database_providers.dart';
 // import 'package:lockpaper/features/notes/data/app_database.dart'; // Unused
 import 'package:lockpaper/features/notes/presentation/screens/note_editor_screen.dart'; // Import for route name
-import 'package:flutter_markdown/flutter_markdown.dart'; // Add this import
 import 'package:lockpaper/features/settings/presentation/screens/settings_screen.dart'; // Import SettingsScreen
+// import 'package:lockpaper/core/presentation/widgets/empty_placeholder.dart'; // Ensure this is correct if used
 
 /// Screen that displays the list of notes.
 class NotesListScreen extends ConsumerWidget {

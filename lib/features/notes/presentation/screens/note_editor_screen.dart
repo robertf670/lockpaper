@@ -281,22 +281,22 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
               blockquote: textTheme.bodyLarge!.copyWith(color: colorScheme.onSurfaceVariant),
               blockquotePadding: const EdgeInsets.all(8.0),
               blockquoteDecoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withOpacity(0.1),
+                color: colorScheme.primaryContainer.withAlpha((255 * 0.1).round()),
                 border: Border(left: BorderSide(color: colorScheme.primary, width: 4.0)),
               ),
               code: baseStyle.copyWith(
                 fontFamily: 'monospace',
-                backgroundColor: colorScheme.onSurface.withOpacity(0.1),
+                backgroundColor: colorScheme.onSurface.withAlpha((255 * 0.1).round()),
                 fontSize: baseStyle.fontSize! * 0.9, // Slightly smaller for code
               ),
               codeblockPadding: const EdgeInsets.all(8.0),
               codeblockDecoration: BoxDecoration(
-                color: colorScheme.onSurface.withOpacity(0.1),
+                color: colorScheme.onSurface.withAlpha((255 * 0.1).round()),
                 borderRadius: BorderRadius.circular(4.0),
-                border: Border.all(color: theme.dividerColor.withOpacity(0.5), width: 1.0),
+                border: Border.all(color: theme.dividerColor.withAlpha((255 * 0.5).round()), width: 1.0),
               ),
               horizontalRuleDecoration: BoxDecoration(
-                border: Border(top: BorderSide(width: 1.5, color: theme.dividerColor)),
+                border: Border(top: BorderSide(width: 1.5, color: theme.dividerColor.withAlpha((255 * 0.5).round()))),
               ),
               // List styles
               listIndent: 24.0,
