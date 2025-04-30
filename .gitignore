@@ -51,3 +51,6 @@ plan.md
 
 # Session state file (not part of project)
 /future.txt
+
+# Signing configuration (contains secrets)
+/android/key.properties
