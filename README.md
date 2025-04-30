@@ -24,7 +24,7 @@ A minimalist, **offline-first** notes application built with Flutter. It keeps a
 *   Data is encrypted at rest using SQLCipher (AES-256).
 *   The app requires no network permissions for core functionality.
 *   No trackers, ads, or third-party analytics are included.
-*   Please review the [Privacy Policy]() for full details. *(Link will be added once GitHub Pages is active)*
+*   Please review the [Privacy Policy](https://robertf670.github.io/lockpaper/privacy_policy.md) for full details.
 
 ## 🛠️ Tech Stack
 
