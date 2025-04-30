@@ -15,7 +15,7 @@ void main() {
 
   // Stored hash for verification tests (generated using the service's method)
   // Example: Hash for "123456" using Crypt.sha512
-  final testPin = '123456';
+  const testPin = '123456';
   final storedHash = Crypt.sha512(testPin).toString();
 
   setUp(() {

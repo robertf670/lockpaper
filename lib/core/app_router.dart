@@ -95,7 +95,6 @@ class AppRouter {
           builder: (BuildContext context, GoRouterState state) {
             final initialPin = state.extra as String?;
             if (initialPin == null) {
-              print('Error: ConfirmPinScreen called without initialPin argument. Navigating back.');
               // Use context.pop() if within the router's context
               WidgetsBinding.instance.addPostFrameCallback((_) { 
                  if (context.canPop()) context.pop(); 
