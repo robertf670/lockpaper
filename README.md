@@ -1,8 +1,6 @@
-# Private Notes App (Development)
+# Lockpaper - Private Notes App
 
 A minimalist, **offline-first** notes application built with Flutter. It keeps all data on-device, protects it with biometrics/PIN, and aims for a single one-time purchase model with **no ads or trackers**.
-
-> **Note:** This is the development repository. For the full development plan, see [`plan.md`](plan.md).
 
 ## ✨ Guiding Principles
 
@@ -12,25 +10,30 @@ A minimalist, **offline-first** notes application built with Flutter. It keeps a
 4.  **Accessibility first:** Support for large text scaling, screen-reader labels, and high-contrast modes.
 5.  **Sustainable indie:** One-time purchase model, no vendor lock-in.
 
-## 🚀 Features (MVP v1.0)
+## 🚀 Features (v1.0)
 
 *   Create, edit, delete, and list notes.
 *   Secure access with Local Authentication (biometric + PIN fallback).
 *   Encrypted on-device storage using Drift + SQLCipher.
 *   Light/dark themes with dynamic color seeding (Material You).
-*   In-app purchase for unlocking full features (non-consumable).
 *   Smooth animated page transitions and FAB hero animation.
 
-_(See [`plan.md`](plan.md) for post-launch and long-term feature goals)._
+## 🔒 Privacy & Security
+
+*   All note data is stored **only** on your device.
+*   Data is encrypted at rest using SQLCipher (AES-256).
+*   The app requires no network permissions for core functionality.
+*   No trackers, ads, or third-party analytics are included.
+*   Please review the [Privacy Policy]() for full details. *(Link will be added once GitHub Pages is active)*
 
 ## 🛠️ Tech Stack
 
-*   **UI Framework:** Flutter 3.29+ / Material 3
+*   **UI Framework:** Flutter 3.29+
 *   **State Management:** Riverpod 2.x
-*   **Routing:** GoRouter 12
-*   **Database:** Drift 2.x + sqflite_sqlcipher (for encrypted storage)
-*   **Security:** `local_auth` + `flutter_secure_storage`
-*   **Theming:** FlexColorScheme 9
+*   **Routing:** GoRouter 14
+*   **Database:** Drift 2.x + sqlcipher_flutter_libs
+*   **Security:** `local_auth` + `flutter_secure_storage` + `crypt`
+*   **Theming:** FlexColorScheme 7+
 *   **Code Generation:** `build_runner` / `drift_dev`
 *   **CI/CD:** GitHub Actions
 
@@ -45,78 +48,80 @@ This project follows a **Clean Architecture Lite** approach:
  │   ├─ app_theme.dart
  │   ├─ app_router.dart
  │   └─ ...
- └─ features/            # Feature-specific modules (e.g., notes)
+ └─ features/            # Feature-specific modules (e.g., notes, settings)
      └─ notes/
          ├─ data/        # Data sources (Drift database, DAOs)
-         ├─ domain/      # Interfaces (Repositories) & Entities
-         ├─ application/ # Business logic (Riverpod providers/controllers)
+         ├─ application/ # Business logic (Riverpod providers/notifiers)
          └─ presentation/# UI (Widgets, Screens)
+     └─ settings/
+         └─ ...
 ```
 
 *   Features are organized vertically within `features/`.
 *   Shared code resides horizontally in `core/`.
 
-## ⚙️ Environment Setup
+## ⚙️ Building from Source
+
+This repository contains the source code for Lockpaper. While the code is visible, it is provided under the terms specified in the License section below.
+
+### Environment Setup
 
 1.  **Install Flutter:** Ensure you have Flutter SDK `3.29` or later.
     ```bash
     flutter upgrade
     ```
-2.  **Enable Impeller:** (Recommended for performance)
-    ```bash
-    flutter config --enable-impeller
-    # flutter config --enable-ios # If targeting iOS
-    ```
-3.  **Install SQLCipher:** (Required for running/testing database encryption locally, especially on macOS)
+2.  **Install SQLCipher:** (Required for running/testing database encryption locally)
     ```bash
     # macOS
     brew install sqlcipher
 
-    # Other platforms: Refer to SQLCipher documentation
+    # Linux (Debian/Ubuntu)
+    sudo apt-get update && sudo apt-get install -y sqlcipher libsqlite3-dev 
+
+    # Windows: Download precompiled binary or build from source (refer to SQLCipher docs)
     ```
-4.  **Get Dependencies:**
+3.  **Get Dependencies:**
     ```bash
-    dart pub get
+    flutter pub get
     ```
 
-## ▶️ Development Workflow
+### Running
 
-1.  **Run Build Runner:** Watch for code generation changes (needed for Drift, Riverpod generators, etc.).
+1.  **Code Generation:** (Required if modifying database or Riverpod providers)
     ```bash
     dart run build_runner watch --delete-conflicting-outputs
     ```
-2.  **Run the App:** Use standard Flutter run commands. Hot reload should work.
+2.  **Run the App:**
     ```bash
     flutter run
     ```
-3.  **Run Tests:**
-    *   Widget Tests: `flutter test test/widget/`
-    *   Unit Tests: `flutter test test/unit/` (or wherever they are placed)
-    *   Integration Tests: `flutter test integration_test/`
-    *   All tests: `flutter test`
-4.  **Check Code Quality:**
-    ```bash
-    dart analyze
-    ```
 
-## 🧪 Testing
+## 🤝 Contributions
 
-*   **Unit Tests:** Located in `test/` (target Repositories, Services).
-*   **Widget Tests:** Located in `test/widget/` (target UI states, using golden files potentially).
-*   **Integration/E2E Tests:** Located in `integration_test/` (target full user flows like install, unlock, CRUD operations). Run using `flutter test integration_test`.
+Contributions are not being accepted for this project at this time.
 
-## 🌳 Git Flow
+## 📧 Contact & Support
 
-```text
-main        # Corresponds to production store builds
-  ↑ (Merge)
-develop     # Main development branch, features merged here
-  ↑ (PR)
-feature/*   # Individual feature branches
-```
+For questions or support inquiries, please contact: ixrqq@tuta.io
 
-Commit messages should follow conventional commit standards if possible.
+Please note that support response times may vary.
 
 ## 📄 License
 
-_(Specify your license here, e.g., MIT, Apache 2.0, or proprietary)_
+Copyright © 2025 Robert Fitzsimons
+
+All Rights Reserved.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software") for viewing and
+evaluation purposes only. No permission is granted to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, or to
+permit persons to whom the Software is furnished to do so.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
