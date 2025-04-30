@@ -1,3 +1,7 @@
+import java.util.Properties
+import java.io.FileInputStream
+import java.io.File
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -6,10 +10,15 @@ plugins {
 }
 
 // Read key.properties file
-val keyPropertiesFile = rootProject.file("android/key.properties")
-val keyProperties = java.util.Properties()
+// Try resolving relative to the parent project (the 'android' directory)
+// Use non-null assertion (!!) as parent should always exist here
+val keyPropertiesFile = parent!!.file("key.properties")
+// Debug: Print the resolved path and existence check - REMOVED
+// println("key.properties Path: ${keyPropertiesFile.absolutePath}")
+// println("key.properties Exists?: ${keyPropertiesFile.exists()}")
+val keyProperties = Properties()
 if (keyPropertiesFile.exists()) {
-    keyProperties.load(java.io.FileInputStream(keyPropertiesFile))
+    keyProperties.load(FileInputStream(keyPropertiesFile))
 }
 
 android {
@@ -40,6 +49,12 @@ android {
     // Define signing configuration for release
     signingConfigs {
         create("release") {
+            // Debugging: Print the values read from key.properties - REMOVED
+            // println("Signing Info: storeFile Path = ${keyProperties["storeFile"]}")
+            // println("Signing Info: keyAlias = ${keyProperties["keyAlias"]}")
+            // println("Signing Info: storePassword Present = ${keyProperties["storePassword"] != null}") 
+            // println("Signing Info: keyPassword Present = ${keyProperties["keyPassword"] != null}") 
+
             keyAlias = keyProperties["keyAlias"] as String?
             keyPassword = keyProperties["keyPassword"] as String?
             storeFile = keyProperties["storeFile"]?.let { rootProject.file(it) } // Use let for safe file path handling
