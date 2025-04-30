@@ -81,7 +81,7 @@ void main() {
     // Default GoRouter behavior
     when(() => mockGoRouter.go(any())).thenAnswer((_) async {});
     when(() => mockGoRouter.push(any())).thenAnswer((_) async {});
-    when(() => mockGoRouter.pop()).thenReturn(null);
+    when(() => mockGoRouter.pop()).thenAnswer((_) {});
     when(() => mockGoRouter.canPop()).thenReturn(true);
     when(() => mockGoRouter.goNamed(any(),
             pathParameters: any(named: 'pathParameters')))

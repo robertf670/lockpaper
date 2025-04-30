@@ -96,7 +96,8 @@ class _MyAppState extends ConsumerState<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final isLocked = ref.watch(appLockStateProvider);
+    // Watch the provider to rebuild when lock state changes, but value isn't needed here.
+    ref.watch(appLockStateProvider);
 
     // Create themes using palettes from DynamicColorBuilder
     final lightTheme = AppTheme.getTheme(widget.lightDynamic, Brightness.light);

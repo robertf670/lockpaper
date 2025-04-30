@@ -11,7 +11,6 @@ class MockRef extends Mock implements Ref {}
 
 void main() {
   late MockFlutterSecureStorage mockSecureStorage;
-  late MockRef mockRef;
   late PinStorageService pinStorageService;
 
   // Stored hash for verification tests (generated using the service's method)
@@ -21,12 +20,11 @@ void main() {
 
   setUp(() {
     mockSecureStorage = MockFlutterSecureStorage();
-    mockRef = MockRef();
     pinStorageService = PinStorageService(mockSecureStorage);
   });
 
   group('PinStorageService', () {
-    const pinStorageKey = 'app_pin_hash'; // ADD const
+    const pinStorageKey = 'app_pin_hash'; // Change final to const
 
     group('hasPin', () {
        test('should return true if a PIN hash is stored', () async {

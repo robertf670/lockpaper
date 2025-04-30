@@ -22,9 +22,9 @@ class AppRouter {
     // Define route names centrally (optional but good practice)
     const lockRoute = '/lock';
     const notesPath = '/'; // Use path consistently for logic
-    final notesRouteName = NotesListScreen.routeName; // Keep for name property if needed
-    final createPinRoute = CreatePinScreen.routeName;
-    final confirmPinRoute = ConfirmPinScreen.routeName;
+    const notesRouteName = NotesListScreen.routeName; // Use const
+    const createPinRoute = CreatePinScreen.routeName; // Use const
+    const confirmPinRoute = ConfirmPinScreen.routeName; // Use const
     
     // Paths that don't require authentication or are part of the auth flow
     final unauthenticatedPaths = {lockRoute, createPinRoute, confirmPinRoute};
@@ -38,17 +38,13 @@ class AppRouter {
         final isLocked = ref.read(appLockStateProvider);
         final currentLocation = state.matchedLocation; // More reliable than location/subloc
 
-        // print('[GoRouter Redirect] Locked: $isLocked, Current: $currentLocation');
-
         // If locked and not already on an auth path, redirect to lock screen
         if (isLocked && !unauthenticatedPaths.contains(currentLocation)) {
-          // print('[GoRouter Redirect] Redirecting to $lockRoute');
           return lockRoute;
         }
 
         // If unlocked and currently on the lock screen, redirect to home path
         if (!isLocked && currentLocation == lockRoute) {
-           // print('[GoRouter Redirect] Redirecting to $notesPath');
           return notesPath; // Use path '/' for redirect target
         }
 
