@@ -196,6 +196,67 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     }
   }
 
+  // --- Helper Method for Stylesheet ---
+  MarkdownStyleSheet _createMarkdownStyleSheet(BuildContext context) {
+    final theme = Theme.of(context);
+    final textTheme = theme.textTheme;
+    final colorScheme = theme.colorScheme;
+    final baseStyle = textTheme.bodyMedium!;
+    
+    // Create stylesheet manually, not using fromTheme()
+    return MarkdownStyleSheet(
+      a: TextStyle(color: colorScheme.primary), // Link style
+      p: baseStyle,
+      pPadding: const EdgeInsets.symmetric(vertical: 4.0), // Add some paragraph spacing
+      h1: textTheme.headlineLarge,
+      h1Padding: const EdgeInsets.symmetric(vertical: 8.0),
+      h2: textTheme.headlineMedium,
+      h2Padding: const EdgeInsets.symmetric(vertical: 6.0),
+      h3: textTheme.headlineSmall,
+      h3Padding: const EdgeInsets.symmetric(vertical: 4.0),
+      h4: textTheme.titleLarge,
+      h4Padding: const EdgeInsets.symmetric(vertical: 4.0),
+      h5: textTheme.titleMedium,
+      h5Padding: const EdgeInsets.symmetric(vertical: 4.0),
+      h6: textTheme.titleSmall,
+      h6Padding: const EdgeInsets.symmetric(vertical: 4.0),
+      em: baseStyle.copyWith(fontStyle: FontStyle.italic),
+      strong: baseStyle.copyWith(fontWeight: FontWeight.bold),
+      del: baseStyle.copyWith(decoration: TextDecoration.lineThrough),
+      blockquote: textTheme.bodyLarge!.copyWith(color: colorScheme.onSurfaceVariant),
+      blockquotePadding: const EdgeInsets.all(8.0),
+      blockquoteDecoration: BoxDecoration(
+        color: colorScheme.primaryContainer.withAlpha((255 * 0.1).round()),
+        border: Border(left: BorderSide(color: colorScheme.primary, width: 4.0)),
+      ),
+      code: baseStyle.copyWith(
+        fontFamily: 'monospace',
+        backgroundColor: colorScheme.onSurface.withAlpha((255 * 0.1).round()),
+        fontSize: baseStyle.fontSize! * 0.9, // Slightly smaller for code
+      ),
+      codeblockPadding: const EdgeInsets.all(8.0),
+      codeblockDecoration: BoxDecoration(
+        color: colorScheme.onSurface.withAlpha((255 * 0.1).round()),
+        borderRadius: BorderRadius.circular(4.0),
+        border: Border.all(color: theme.dividerColor.withAlpha((255 * 0.5).round()), width: 1.0),
+      ),
+      horizontalRuleDecoration: BoxDecoration(
+        border: Border(top: BorderSide(width: 1.5, color: theme.dividerColor.withAlpha((255 * 0.5).round()))),
+      ),
+      // List styles
+      listIndent: 24.0,
+      listBullet: baseStyle,
+      listBulletPadding: const EdgeInsets.only(right: 8.0),
+      // Table styles (if needed later)
+      // tableHead: baseStyle.copyWith(fontWeight: FontWeight.bold),
+      // tableBody: baseStyle,
+      // tableBorder: TableBorder.all(color: theme.dividerColor, width: 1.0),
+      // tableColumnWidth: const IntrinsicColumnWidth(),
+      // tableCellsPadding: const EdgeInsets.all(8.0),
+      // tableCellsDecoration: BoxDecoration(),
+    );
+  }
+
   // --- Build Method ---
 
   @override
@@ -213,10 +274,6 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
       _bodyController.text = noteAsyncValue.value!.body;
     }
 
-    // REMOVED Hero widget wrapping Scaffold
-    // return Hero(
-    //   tag: 'fab', // Use the SAME tag as the FAB
-    //   child: Scaffold(
     return Scaffold(
         appBar: AppBar(
           title: Text(isNewNote ? 'New Note' : 'Edit Note'),
@@ -245,136 +302,112 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
               ),
           ] : [], // Hide actions while loading/error
         ),
-        // Restore the original body structure
         body: noteAsyncValue.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, stack) => Center(
             child: Text('Error loading note: $error'),
           ),
           data: (note) {
-            // Define the Markdown stylesheet MANUALLY using the current theme
-            final theme = Theme.of(context);
-            final textTheme = theme.textTheme;
-            final colorScheme = theme.colorScheme;
-            final baseStyle = textTheme.bodyMedium!;
-            
-            // Create stylesheet manually, not using fromTheme()
-            final markdownStyleSheet = MarkdownStyleSheet(
-              a: TextStyle(color: colorScheme.primary), // Link style
-              p: baseStyle,
-              pPadding: const EdgeInsets.symmetric(vertical: 4.0), // Add some paragraph spacing
-              h1: textTheme.headlineLarge,
-              h1Padding: const EdgeInsets.symmetric(vertical: 8.0),
-              h2: textTheme.headlineMedium,
-              h2Padding: const EdgeInsets.symmetric(vertical: 6.0),
-              h3: textTheme.headlineSmall,
-              h3Padding: const EdgeInsets.symmetric(vertical: 4.0),
-              h4: textTheme.titleLarge,
-              h4Padding: const EdgeInsets.symmetric(vertical: 4.0),
-              h5: textTheme.titleMedium,
-              h5Padding: const EdgeInsets.symmetric(vertical: 4.0),
-              h6: textTheme.titleSmall,
-              h6Padding: const EdgeInsets.symmetric(vertical: 4.0),
-              em: baseStyle.copyWith(fontStyle: FontStyle.italic),
-              strong: baseStyle.copyWith(fontWeight: FontWeight.bold),
-              del: baseStyle.copyWith(decoration: TextDecoration.lineThrough),
-              blockquote: textTheme.bodyLarge!.copyWith(color: colorScheme.onSurfaceVariant),
-              blockquotePadding: const EdgeInsets.all(8.0),
-              blockquoteDecoration: BoxDecoration(
-                color: colorScheme.primaryContainer.withAlpha((255 * 0.1).round()),
-                border: Border(left: BorderSide(color: colorScheme.primary, width: 4.0)),
-              ),
-              code: baseStyle.copyWith(
-                fontFamily: 'monospace',
-                backgroundColor: colorScheme.onSurface.withAlpha((255 * 0.1).round()),
-                fontSize: baseStyle.fontSize! * 0.9, // Slightly smaller for code
-              ),
-              codeblockPadding: const EdgeInsets.all(8.0),
-              codeblockDecoration: BoxDecoration(
-                color: colorScheme.onSurface.withAlpha((255 * 0.1).round()),
-                borderRadius: BorderRadius.circular(4.0),
-                border: Border.all(color: theme.dividerColor.withAlpha((255 * 0.5).round()), width: 1.0),
-              ),
-              horizontalRuleDecoration: BoxDecoration(
-                border: Border(top: BorderSide(width: 1.5, color: theme.dividerColor.withAlpha((255 * 0.5).round()))),
-              ),
-              // List styles
-              listIndent: 24.0,
-              listBullet: baseStyle,
-              listBulletPadding: const EdgeInsets.only(right: 8.0),
-              // Table styles (if needed later)
-              // tableHead: baseStyle.copyWith(fontWeight: FontWeight.bold),
-              // tableBody: baseStyle,
-              // tableBorder: TableBorder.all(color: theme.dividerColor, width: 1.0),
-              // tableColumnWidth: const IntrinsicColumnWidth(),
-              // tableCellsPadding: const EdgeInsets.all(8.0),
-              // tableCellsDecoration: BoxDecoration(),
-            );
+            // Get stylesheet from helper function
+            final markdownStyleSheet = _createMarkdownStyleSheet(context);
+            // Key for AnimatedSwitcher children
+            // final bodyEditorKey = ValueKey('body_editor_${widget.noteId}'); // Removed
+            // final markdownPreviewKey = ValueKey('markdown_preview_${widget.noteId}'); // Removed
+            // Text for preview
+            final textToRender = _bodyController.text.trimLeft(); // Simplified trim
 
-            // Wrap the content in a SingleChildScrollView to prevent overflow
-            return SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  // Ensure Column doesn't try to expand infinitely vertically
-                  // when inside a SingleChildScrollView.
-                  // We rely on the Expanded TextField to fill the space.
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      key: const Key('note_title_field'),
-                      decoration: const InputDecoration(hintText: 'Title'),
-                      controller: _titleController,
-                      textCapitalization: TextCapitalization.sentences,
+            // Structure: Padding -> Column -> [TitleField, Spacer, AnimatedSwitcher(BodyField | Preview)]
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                // Ensure Column starts at the top
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // --- Title Field (Always Visible) ---
+                  TextField(
+                    key: const Key('note_title_field'),
+                    decoration: const InputDecoration(
+                      hintText: 'Title',
+                      border: InputBorder.none,
+                      filled: false,
                     ),
-                    const SizedBox(height: 8),
-                    // Need to constrain the height of the Expanded TextField
-                    // inside a SingleChildScrollView.
-                    // Let's give it a reasonable initial height, but it can grow.
-                    SizedBox(
-                      // Adjust height as needed, or use MediaQuery
-                      height: MediaQuery.of(context).size.height * 0.5,
+                    controller: _titleController,
+                    textCapitalization: TextCapitalization.sentences,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  
+                  // --- Body Area (AnimatedSwitcher for Editor/Preview) ---
+                  // Need Expanded here so the switcher (and its child) takes remaining space
+                  Expanded(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300), // Standard duration
+                      transitionBuilder: (Widget child, Animation<double> animation) {
+                        return FadeTransition(opacity: animation, child: child);
+                      },
                       child: _isPreviewMode
-                          ? Builder(builder: (context) { // Use Builder to get context for print
-                              // Process text line by line to remove leading whitespace
-                              final rawText = _bodyController.text;
-                              final lines = rawText.split('\n');
-                              final trimmedLines = lines.map((line) => line.trimLeft());
-                              final textToRender = trimmedLines.join('\n');
-                              
-                              // --- REMOVED DIAGNOSTIC PRINT ---
-                              // print("--- Rendering Markdown (Lines Trimmed) ---");
-                              // print(textToRender); 
-                              // print("--- End Markdown Text ---");
-                              // --- END DIAGNOSTIC PRINT ---
-                              
-                              return MarkdownBody( // Show Markdown Preview
-                                data: textToRender,
-                                selectable: true, // Allow text selection in preview
-                                // RE-ENABLE custom stylesheet
-                                styleSheet: markdownStyleSheet, 
-                              );
-                            })
-                          : TextField( // Show Text Editor
-                              key: const Key('note_body_field'),
+                          ? _MarkdownPreview( // Use the preview widget
+                              // key: markdownPreviewKey, // No key needed for test
+                              data: textToRender,
+                              styleSheet: markdownStyleSheet,
+                            )
+                          : TextField( // Use the body TextField directly
+                              key: const Key('note_body_field'), // Use const Key for testability
                               decoration: const InputDecoration(
                                 hintText: 'Note content (Markdown supported)...',
+                                // Ensure no background or borders appear
+                                filled: false,
+                                fillColor: Colors.transparent,
                                 border: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                disabledBorder: InputBorder.none,
+                                errorBorder: InputBorder.none,
+                                focusedErrorBorder: InputBorder.none,
                               ),
-                              maxLines: null,
-                              expands: true,
+                              maxLines: null, // Allow infinite lines
+                              expands: true, // Need expands TRUE here inside Expanded
                               controller: _bodyController,
                               textCapitalization: TextCapitalization.sentences,
                               textAlignVertical: TextAlignVertical.top,
+                              style: Theme.of(context).textTheme.bodyLarge,
                             ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           },
         ),
-      // ),
     );
+  }
+}
+
+// --- Helper Widgets ---
+
+/// Widget for displaying the Markdown preview.
+class _MarkdownPreview extends StatelessWidget {
+  final String data;
+  final MarkdownStyleSheet styleSheet;
+
+  const _MarkdownPreview({
+    super.key,
+    required this.data,
+    required this.styleSheet,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Use Builder to get context for potential prints if needed later
+    return Builder(builder: (context) { 
+      return Align(
+        alignment: Alignment.topLeft,
+        child: MarkdownBody(
+          data: data.isEmpty ? "*Empty note...*" : data, // Use placeholder
+          selectable: true, 
+          styleSheet: styleSheet,
+        ),
+      );
+    });
   }
 } 

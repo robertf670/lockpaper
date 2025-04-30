@@ -26,6 +26,9 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
+      - name: Create required asset directory for build/test
+        run: mkdir -p assets/images
+
       - name: Analyze project source
         run: flutter analyze --no-fatal-infos --no-fatal-warnings
 

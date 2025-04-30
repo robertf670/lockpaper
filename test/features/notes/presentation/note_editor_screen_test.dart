@@ -7,6 +7,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:lockpaper/features/notes/application/database_providers.dart';
 import 'package:lockpaper/features/notes/data/app_database.dart';
 import 'package:lockpaper/features/notes/presentation/screens/note_editor_screen.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 
 // Mocks
 class MockGoRouter extends Mock implements GoRouter {}
@@ -175,12 +176,14 @@ void main() {
       );
       await tester.pumpWidget(testWidgetResult.widget);
       await tester.pumpAndSettle();
+      await tester.pump(); // Extra pump for UI to settle fully
 
       // Act
       // Enter text into the title and body fields
       await tester.enterText(find.byKey(const Key('note_title_field')), 'New Title');
       await tester.enterText(find.byKey(const Key('note_body_field')), 'New Body');
       await tester.pump(); // Allow state to update
+      await tester.pump(); // Extra pump after entering text
 
       // Tap the save button (using the correct icon)
       await tester.tap(find.byIcon(Icons.save_alt_outlined));
@@ -216,6 +219,7 @@ void main() {
       // Emit initial data
       testWidgetResult.controller.add(testNote);
       await tester.pumpAndSettle();
+      await tester.pump(); // Extra pump for UI to settle fully after data load
 
       // Act
       // Enter new text
@@ -224,6 +228,7 @@ void main() {
       await tester.enterText(find.byKey(const Key('note_title_field')), updatedTitle);
       await tester.enterText(find.byKey(const Key('note_body_field')), updatedBody);
       await tester.pump(); // Allow state to update
+      await tester.pump(); // Extra pump after entering text
 
       // Tap save
       await tester.tap(find.byIcon(Icons.save_alt_outlined));
@@ -414,11 +419,14 @@ void main() {
       );
       await tester.pumpWidget(testWidgetResult.widget);
       await tester.pumpAndSettle();
+      await tester.pump(); // Extra pump for UI to settle fully
 
       // Act
       await tester.enterText(find.byKey(const Key('note_title_field')), 'Error Title');
       await tester.enterText(find.byKey(const Key('note_body_field')), 'Error Body');
       await tester.pump();
+      await tester.pump(); // Extra pump after entering text
+
       await tester.tap(find.byIcon(Icons.save_alt_outlined));
       await tester.pumpAndSettle(); // Allow SnackBar to show
 
@@ -488,6 +496,74 @@ void main() {
       await testWidgetResult.controller.close();
     });
 
+    // --- PREVIEW TOGGLE TESTS --- 
+
+    testWidgets('Tapping preview button hides editor and shows Markdown preview', (WidgetTester tester) async {
+      // Arrange
+      final testWidgetResult = createTestableWidget(
+        noteId: testNote.id,
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      testWidgetResult.controller.add(testNote);
+      await tester.pumpAndSettle();
+
+      // Assert initial state (Edit mode)
+      expect(find.byKey(const Key('note_title_field')), findsOneWidget); // Title always visible
+      expect(find.byKey(const Key('note_body_field')), findsOneWidget); // Body editor visible
+      expect(find.byType(MarkdownBody), findsNothing); // Preview not visible
+      expect(find.byIcon(Icons.visibility_outlined), findsOneWidget); // Preview button visible
+      expect(find.byIcon(Icons.edit_note_outlined), findsNothing); // Edit button not visible
+
+      // Act: Tap the preview button
+      await tester.tap(find.byIcon(Icons.visibility_outlined));
+      await tester.pumpAndSettle(); // Allow AnimatedSwitcher to complete
+
+      // Assert final state (Preview mode)
+      expect(find.byKey(const Key('note_title_field')), findsOneWidget); // Title still visible
+      expect(find.byKey(const Key('note_body_field')), findsNothing); // Body editor not visible
+      expect(find.byType(MarkdownBody), findsOneWidget); // Preview visible
+      expect(find.byIcon(Icons.visibility_outlined), findsNothing); // Preview button not visible
+      expect(find.byIcon(Icons.edit_note_outlined), findsOneWidget); // Edit button visible
+
+      await testWidgetResult.controller.close();
+    });
+
+    testWidgets('Tapping edit button hides preview and shows editor', (WidgetTester tester) async {
+      // Arrange
+      final testWidgetResult = createTestableWidget(
+        noteId: testNote.id,
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      testWidgetResult.controller.add(testNote);
+      await tester.pumpAndSettle();
+
+      // Go into preview mode first
+      await tester.tap(find.byIcon(Icons.visibility_outlined));
+      await tester.pumpAndSettle();
+
+      // Assert initial state (Preview mode)
+      expect(find.byKey(const Key('note_title_field')), findsOneWidget);
+      expect(find.byKey(const Key('note_body_field')), findsNothing);
+      expect(find.byType(MarkdownBody), findsOneWidget);
+      expect(find.byIcon(Icons.edit_note_outlined), findsOneWidget);
+
+      // Act: Tap the edit button
+      await tester.tap(find.byIcon(Icons.edit_note_outlined));
+      await tester.pumpAndSettle(); // Allow AnimatedSwitcher to complete
+
+      // Assert final state (Edit mode)
+      expect(find.byKey(const Key('note_title_field')), findsOneWidget);
+      expect(find.byKey(const Key('note_body_field')), findsOneWidget);
+      expect(find.byType(MarkdownBody), findsNothing);
+      expect(find.byIcon(Icons.visibility_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.edit_note_outlined), findsNothing);
+
+      await testWidgetResult.controller.close();
+    });
 
     // TODO: Add tests for delete confirmation dialog (Cancel button)
   });
