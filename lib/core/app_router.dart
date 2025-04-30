@@ -13,6 +13,7 @@ import 'package:lockpaper/core/application/app_lock_provider.dart'; // Import lo
 import 'package:lockpaper/core/presentation/screens/pin_change/enter_current_pin_screen.dart';
 import 'package:lockpaper/core/presentation/screens/pin_change/enter_new_pin_screen.dart';
 import 'package:lockpaper/core/presentation/screens/pin_change/confirm_new_pin_screen.dart';
+import 'package:lockpaper/features/settings/presentation/screens/settings_screen.dart'; // Import SettingsScreen
 
 /// Defines the application's routes using GoRouter.
 class AppRouter {
@@ -142,6 +143,14 @@ class AppRouter {
             final newPin = state.extra as String?;
             // TODO: Add error handling if newPin is null?
             return ConfirmNewPinScreen(newPinToConfirm: newPin ?? '');
+          },
+        ),
+        // Settings Route
+        GoRoute(
+          path: SettingsScreen.routeName, 
+          name: SettingsScreen.routeName,
+          builder: (BuildContext context, GoRouterState state) {
+            return const SettingsScreen();
           },
         ),
       ],
