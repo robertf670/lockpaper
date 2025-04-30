@@ -10,6 +10,9 @@ import 'package:lockpaper/core/presentation/screens/pin_setup/confirm_pin_screen
 import 'package:lockpaper/core/presentation/screens/pin_setup/create_pin_screen.dart';
 import 'package:lockpaper/core/presentation/screens/lock_screen.dart'; // Import LockScreen
 import 'package:lockpaper/core/application/app_lock_provider.dart'; // Import lock provider
+import 'package:lockpaper/core/presentation/screens/pin_change/enter_current_pin_screen.dart';
+import 'package:lockpaper/core/presentation/screens/pin_change/enter_new_pin_screen.dart';
+import 'package:lockpaper/core/presentation/screens/pin_change/confirm_new_pin_screen.dart';
 
 /// Defines the application's routes using GoRouter.
 class AppRouter {
@@ -120,6 +123,26 @@ class AppRouter {
                 },
               );
            },
+        ),
+        // Add Change PIN routes
+        GoRoute(
+          name: EnterCurrentPinScreen.routeName,
+          path: EnterCurrentPinScreen.routeName,
+          builder: (context, state) => const EnterCurrentPinScreen(),
+        ),
+        GoRoute(
+          name: EnterNewPinScreen.routeName,
+          path: EnterNewPinScreen.routeName,
+          builder: (context, state) => const EnterNewPinScreen(),
+        ),
+        GoRoute(
+          name: ConfirmNewPinScreen.routeName,
+          path: ConfirmNewPinScreen.routeName,
+          builder: (context, state) {
+            final newPin = state.extra as String?;
+            // TODO: Add error handling if newPin is null?
+            return ConfirmNewPinScreen(newPinToConfirm: newPin ?? '');
+          },
         ),
       ],
       errorBuilder: (context, state) => Scaffold( // Basic error screen

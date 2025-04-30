@@ -5,6 +5,7 @@ import 'package:lockpaper/features/notes/application/database_providers.dart';
 // import 'package:lockpaper/features/notes/data/app_database.dart'; // Unused
 import 'package:lockpaper/features/notes/presentation/screens/note_editor_screen.dart'; // Import for route name
 import 'package:flutter_markdown/flutter_markdown.dart'; // Add this import
+import 'package:lockpaper/core/presentation/screens/pin_change/enter_current_pin_screen.dart'; // Import Change PIN start screen
 
 /// Screen that displays the list of notes.
 class NotesListScreen extends ConsumerWidget {
@@ -21,7 +22,18 @@ class NotesListScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Lockpaper'),
-        // TODO: Add actions like settings, search?
+        // Add actions like settings, search?
+        actions: [
+          // Temporary button to trigger Change PIN flow
+          IconButton(
+            icon: const Icon(Icons.pin_outlined), // Or Icons.key_outlined
+            tooltip: 'Change PIN',
+            onPressed: () {
+              // Navigate to EnterCurrentPinScreen
+              context.pushNamed(EnterCurrentPinScreen.routeName); // Use pushNamed
+            },
+          ),
+        ],
       ),
       body: notesAsyncValue.when(
         // Data loaded successfully
