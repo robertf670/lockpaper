@@ -45,21 +45,18 @@ class _ConfirmPinScreenState extends ConsumerState<ConfirmPinScreen> {
         _errorMessage = null; // Clear previous error
       });
       try {
-        // Show loading indicator?
         final pinService = ref.read(pinStorageServiceProvider);
         await pinService.setPin(confirmedPin);
 
-        // Navigate back to LockScreen (or maybe pop until root?)
-        // Popping twice removes CreatePin and ConfirmPin
         if (mounted) {
-          // Use GoRouter to navigate back to the main screen, clearing setup stack
-          context.goNamed(NotesListScreen.routeName); 
-          // Optionally show a success message (Snackbar)
+          context.goNamed(NotesListScreen.routeName);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('PIN set successfully!')),
           );
         }
+
       } catch (e) {
+        // Handle exceptions during pin set
         if (mounted) {
           setState(() {
             _errorMessage = 'Failed to save PIN. Please try again.';
