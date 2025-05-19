@@ -1,0 +1,12 @@
+# Cursor AI Rule: Version Management
+# When significant changes are made, remind about updating version numbers in:
+# 1. pubspec.yaml
+# 2. android/app/build.gradle.kts
+# 3. lib/core/services/version_service.dart
+# See VERSION_MANAGEMENT.md for complete instructions
+
+# Ignore generated files
+*.g.dart
+*.config.dart
+.dart_tool/
+build/ 
