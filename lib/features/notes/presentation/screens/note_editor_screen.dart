@@ -25,6 +25,7 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _bodyController;
   bool _isPreviewMode = false; // State variable for preview toggle
+  bool _isPinned = false; // State variable for pin status
 
   // TODO: Load existing note data if widget.noteId is not null
   // TODO: Implement delete logic
@@ -34,6 +35,12 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     super.initState();
     _titleController = TextEditingController();
     _bodyController = TextEditingController();
+
+    // If editing an existing note, load its data and set initial pin status
+    if (widget.noteId != null) {
+      // It's better to initialize _isPinned when the data is actually loaded.
+      // We'll do this in the build method when noteAsyncValue has data.
+    }
   }
 
   @override
@@ -196,6 +203,30 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
     }
   }
 
+  Future<void> _togglePinStatus() async {
+    if (widget.noteId == null) return; // Should not happen if button is shown correctly
+
+    final dao = ref.read(noteDaoProvider);
+    final newPinStatus = !_isPinned; // Optimistically determine new status
+
+    setState(() {
+      _isPinned = newPinStatus;
+    });
+
+    try {
+      await dao.updatePinStatus(widget.noteId!, newPinStatus);
+      // Optionally show a snackbar, but for quick toggle, it might be too much
+    } catch (e) {
+      // Revert optimistic update on error and show error
+      setState(() {
+        _isPinned = !newPinStatus; 
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating pin status: $e')),
+      );
+    }
+  }
+
   // --- Helper Method for Stylesheet ---
   MarkdownStyleSheet _createMarkdownStyleSheet(BuildContext context) {
     final theme = Theme.of(context);
@@ -265,13 +296,28 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
 
     // Watch the provider if editing, otherwise use a placeholder value
     final noteAsyncValue = isNewNote
-        ? const AsyncData<Note?>(null) // Provide a default AsyncData state for new notes
+        ? const AsyncData<Note?>(null)
         : ref.watch(noteByIdStreamProvider(widget.noteId!));
+
+    // Initialize _isPinned when note data is available for an existing note
+    if (!isNewNote) { // Only listen if it's an existing note
+      ref.listen(noteByIdStreamProvider(widget.noteId!), (_, next) { // Use widget.noteId! directly
+        if (next.hasValue && next.value != null) {
+          // Only update if the local state differs from the stream
+          if (_isPinned != next.value!.isPinned) {
+              setState(() {
+                  _isPinned = next.value!.isPinned;
+              });
+          }
+        }
+      });
+    }
 
     // Populate controllers *once* when data arrives for an existing note
     if (!isNewNote && noteAsyncValue.hasValue && noteAsyncValue.value != null) {
       _titleController.text = noteAsyncValue.value!.title;
       _bodyController.text = noteAsyncValue.value!.body;
+      // _isPinned is now handled by the ref.listen for more dynamic updates
     }
 
     return Scaffold(
@@ -279,6 +325,13 @@ class _NoteEditorScreenState extends ConsumerState<NoteEditorScreen> {
           title: Text(isNewNote ? 'New Note' : 'Edit Note'),
           // Show actions only when data is loaded or when creating a new note
           actions: (isNewNote || noteAsyncValue.hasValue) ? [
+            // Pin/Unpin Button (only for existing notes)
+            if (!isNewNote && noteAsyncValue.value != null) // Ensure note data is loaded
+              IconButton(
+                icon: Icon(_isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+                tooltip: _isPinned ? 'Unpin note' : 'Pin note',
+                onPressed: _togglePinStatus,
+              ),
             // Preview Toggle Button
             IconButton(
               icon: Icon(_isPreviewMode ? Icons.edit_note_outlined : Icons.visibility_outlined),

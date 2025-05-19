@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart'; // Import for CustomSemanticsAction
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart'; // Import GoRouter
 import 'package:lockpaper/features/notes/application/database_providers.dart';
@@ -47,12 +48,25 @@ class NotesListScreen extends ConsumerWidget {
             itemCount: notes.length,
             itemBuilder: (context, index) {
               final note = notes[index];
+              final noteDao = ref.read(noteDaoProvider); // Get DAO instance
+
               // Add Semantics for better screen reader support
               return Semantics(
                 button: true, // Indicate it acts like a button
-                label: 'View or edit note: ${note.title.isNotEmpty ? note.title : 'Untitled Note'}', // Describe action and content
-                excludeSemantics: true, // Prevent child text being read separately
+                label: 'View or edit note: ${note.title.isNotEmpty ? note.title : 'Untitled Note'}${(note.isPinned ? ', Pinned' : '')}', // Enhanced label
+                customSemanticsActions: {
+                  CustomSemanticsAction(label: note.isPinned ? 'Unpin note' : 'Pin note'): () async {
+                    await noteDao.updatePinStatus(note.id, !note.isPinned);
+                  }
+                },
                 child: ListTile(
+                  leading: IconButton(
+                    icon: Icon(note.isPinned ? Icons.push_pin : Icons.push_pin_outlined),
+                    tooltip: note.isPinned ? 'Unpin note' : 'Pin note',
+                    onPressed: () async {
+                      await noteDao.updatePinStatus(note.id, !note.isPinned);
+                    },
+                  ),
                   title: Text(note.title.isNotEmpty ? note.title : 'Untitled Note'),
                   // Revert subtitle back to Text widget for stability
                   subtitle: Text(

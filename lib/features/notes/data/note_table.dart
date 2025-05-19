@@ -17,4 +17,7 @@ class Notes extends Table {
 
   /// Timestamp when the note was last updated (nullable).
   DateTimeColumn get updatedAt => dateTime().nullable()();
+
+  /// Whether the note is pinned (defaults to false).
+  BoolColumn get isPinned => boolean().withDefault(const Constant(false))();
 } 

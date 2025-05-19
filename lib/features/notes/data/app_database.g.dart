@@ -48,8 +48,19 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
   late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
       'updated_at', aliasedName, true,
       type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _isPinnedMeta =
+      const VerificationMeta('isPinned');
   @override
-  List<GeneratedColumn> get $columns => [id, title, body, createdAt, updatedAt];
+  late final GeneratedColumn<bool> isPinned = GeneratedColumn<bool>(
+      'is_pinned', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_pinned" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [id, title, body, createdAt, updatedAt, isPinned];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -83,6 +94,10 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
       context.handle(_updatedAtMeta,
           updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
     }
+    if (data.containsKey('is_pinned')) {
+      context.handle(_isPinnedMeta,
+          isPinned.isAcceptableOrUnknown(data['is_pinned']!, _isPinnedMeta));
+    }
     return context;
   }
 
@@ -102,6 +117,8 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, Note> {
           .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
       updatedAt: attachedDatabase.typeMapping
           .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+      isPinned: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_pinned'])!,
     );
   }
 
@@ -126,12 +143,16 @@ class Note extends DataClass implements Insertable<Note> {
 
   /// Timestamp when the note was last updated (nullable).
   final DateTime? updatedAt;
+
+  /// Whether the note is pinned (defaults to false).
+  final bool isPinned;
   const Note(
       {required this.id,
       required this.title,
       required this.body,
       required this.createdAt,
-      this.updatedAt});
+      this.updatedAt,
+      required this.isPinned});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -142,6 +163,7 @@ class Note extends DataClass implements Insertable<Note> {
     if (!nullToAbsent || updatedAt != null) {
       map['updated_at'] = Variable<DateTime>(updatedAt);
     }
+    map['is_pinned'] = Variable<bool>(isPinned);
     return map;
   }
 
@@ -154,6 +176,7 @@ class Note extends DataClass implements Insertable<Note> {
       updatedAt: updatedAt == null && nullToAbsent
           ? const Value.absent()
           : Value(updatedAt),
+      isPinned: Value(isPinned),
     );
   }
 
@@ -166,6 +189,7 @@ class Note extends DataClass implements Insertable<Note> {
       body: serializer.fromJson<String>(json['body']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+      isPinned: serializer.fromJson<bool>(json['isPinned']),
     );
   }
   @override
@@ -177,6 +201,7 @@ class Note extends DataClass implements Insertable<Note> {
       'body': serializer.toJson<String>(body),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+      'isPinned': serializer.toJson<bool>(isPinned),
     };
   }
 
@@ -185,13 +210,15 @@ class Note extends DataClass implements Insertable<Note> {
           String? title,
           String? body,
           DateTime? createdAt,
-          Value<DateTime?> updatedAt = const Value.absent()}) =>
+          Value<DateTime?> updatedAt = const Value.absent(),
+          bool? isPinned}) =>
       Note(
         id: id ?? this.id,
         title: title ?? this.title,
         body: body ?? this.body,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+        isPinned: isPinned ?? this.isPinned,
       );
   Note copyWithCompanion(NotesCompanion data) {
     return Note(
@@ -200,6 +227,7 @@ class Note extends DataClass implements Insertable<Note> {
       body: data.body.present ? data.body.value : this.body,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      isPinned: data.isPinned.present ? data.isPinned.value : this.isPinned,
     );
   }
 
@@ -210,13 +238,15 @@ class Note extends DataClass implements Insertable<Note> {
           ..write('title: $title, ')
           ..write('body: $body, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isPinned: $isPinned')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, title, body, createdAt, updatedAt);
+  int get hashCode =>
+      Object.hash(id, title, body, createdAt, updatedAt, isPinned);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -225,7 +255,8 @@ class Note extends DataClass implements Insertable<Note> {
           other.title == this.title &&
           other.body == this.body &&
           other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
+          other.updatedAt == this.updatedAt &&
+          other.isPinned == this.isPinned);
 }
 
 class NotesCompanion extends UpdateCompanion<Note> {
@@ -234,12 +265,14 @@ class NotesCompanion extends UpdateCompanion<Note> {
   final Value<String> body;
   final Value<DateTime> createdAt;
   final Value<DateTime?> updatedAt;
+  final Value<bool> isPinned;
   const NotesCompanion({
     this.id = const Value.absent(),
     this.title = const Value.absent(),
     this.body = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.isPinned = const Value.absent(),
   });
   NotesCompanion.insert({
     this.id = const Value.absent(),
@@ -247,6 +280,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
     required String body,
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
+    this.isPinned = const Value.absent(),
   })  : title = Value(title),
         body = Value(body);
   static Insertable<Note> custom({
@@ -255,6 +289,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
     Expression<String>? body,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
+    Expression<bool>? isPinned,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -262,6 +297,7 @@ class NotesCompanion extends UpdateCompanion<Note> {
       if (body != null) 'body': body,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
+      if (isPinned != null) 'is_pinned': isPinned,
     });
   }
 
@@ -270,13 +306,15 @@ class NotesCompanion extends UpdateCompanion<Note> {
       Value<String>? title,
       Value<String>? body,
       Value<DateTime>? createdAt,
-      Value<DateTime?>? updatedAt}) {
+      Value<DateTime?>? updatedAt,
+      Value<bool>? isPinned}) {
     return NotesCompanion(
       id: id ?? this.id,
       title: title ?? this.title,
       body: body ?? this.body,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isPinned: isPinned ?? this.isPinned,
     );
   }
 
@@ -298,6 +336,9 @@ class NotesCompanion extends UpdateCompanion<Note> {
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
+    if (isPinned.present) {
+      map['is_pinned'] = Variable<bool>(isPinned.value);
+    }
     return map;
   }
 
@@ -308,7 +349,8 @@ class NotesCompanion extends UpdateCompanion<Note> {
           ..write('title: $title, ')
           ..write('body: $body, ')
           ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('isPinned: $isPinned')
           ..write(')'))
         .toString();
   }
@@ -332,6 +374,7 @@ typedef $$NotesTableCreateCompanionBuilder = NotesCompanion Function({
   required String body,
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
+  Value<bool> isPinned,
 });
 typedef $$NotesTableUpdateCompanionBuilder = NotesCompanion Function({
   Value<int> id,
@@ -339,6 +382,7 @@ typedef $$NotesTableUpdateCompanionBuilder = NotesCompanion Function({
   Value<String> body,
   Value<DateTime> createdAt,
   Value<DateTime?> updatedAt,
+  Value<bool> isPinned,
 });
 
 class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
@@ -363,6 +407,9 @@ class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
 
   ColumnFilters<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isPinned => $composableBuilder(
+      column: $table.isPinned, builder: (column) => ColumnFilters(column));
 }
 
 class $$NotesTableOrderingComposer
@@ -388,6 +435,9 @@ class $$NotesTableOrderingComposer
 
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
       column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isPinned => $composableBuilder(
+      column: $table.isPinned, builder: (column) => ColumnOrderings(column));
 }
 
 class $$NotesTableAnnotationComposer
@@ -413,6 +463,9 @@ class $$NotesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get isPinned =>
+      $composableBuilder(column: $table.isPinned, builder: (column) => column);
 }
 
 class $$NotesTableTableManager extends RootTableManager<
@@ -443,6 +496,7 @@ class $$NotesTableTableManager extends RootTableManager<
             Value<String> body = const Value.absent(),
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
+            Value<bool> isPinned = const Value.absent(),
           }) =>
               NotesCompanion(
             id: id,
@@ -450,6 +504,7 @@ class $$NotesTableTableManager extends RootTableManager<
             body: body,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            isPinned: isPinned,
           ),
           createCompanionCallback: ({
             Value<int> id = const Value.absent(),
@@ -457,6 +512,7 @@ class $$NotesTableTableManager extends RootTableManager<
             required String body,
             Value<DateTime> createdAt = const Value.absent(),
             Value<DateTime?> updatedAt = const Value.absent(),
+            Value<bool> isPinned = const Value.absent(),
           }) =>
               NotesCompanion.insert(
             id: id,
@@ -464,6 +520,7 @@ class $$NotesTableTableManager extends RootTableManager<
             body: body,
             createdAt: createdAt,
             updatedAt: updatedAt,
+            isPinned: isPinned,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

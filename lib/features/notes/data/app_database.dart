@@ -19,9 +19,14 @@ class NoteDao extends DatabaseAccessor<AppDatabase> with _$NoteDaoMixin {
   /// Creates the DAO.
   NoteDao(super.db);
 
-  /// Watches all notes, ordered by creation date descending.
-  Stream<List<Note>> watchAllNotes() =>
-      (select(notes)..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).watch();
+  /// Watches all notes, ordered by pinned status and then creation date descending.
+  Stream<List<Note>> watchAllNotes() => (
+    select(notes)
+      ..orderBy([
+        (t) => OrderingTerm(expression: t.isPinned, mode: OrderingMode.desc),
+        (t) => OrderingTerm(expression: t.createdAt, mode: OrderingMode.desc),
+      ])
+  ).watch();
 
   /// Watches a single note by its ID.
   Stream<Note?> watchNoteById(int id) =>
@@ -32,6 +37,13 @@ class NoteDao extends DatabaseAccessor<AppDatabase> with _$NoteDaoMixin {
 
   /// Updates an existing note.
   Future<bool> updateNote(NotesCompanion note) => update(notes).replace(note);
+
+  /// Updates the pinned status of a note.
+  Future<bool> updatePinStatus(int noteId, bool isPinned) async {
+    final count = await (update(notes)..where((t) => t.id.equals(noteId)))
+        .write(NotesCompanion(isPinned: Value(isPinned)));
+    return count > 0;
+  }
 
   /// Deletes a note.
   Future<int> deleteNote(NotesCompanion note) => delete(notes).delete(note);
@@ -52,7 +64,7 @@ class AppDatabase extends _$AppDatabase {
   /// The schema version of the database.
   /// Increment this number whenever you change the schema.
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   // Override close method to clean up resources
   @override
@@ -62,15 +74,16 @@ class AppDatabase extends _$AppDatabase {
   }
 
   // TODO: Implement migrations if schema changes in the future
-  // @override
-  // MigrationStrategy get migration => MigrationStrategy(
-  //   onCreate: (Migrator m) => m.createAll(),
-  //   onUpgrade: (Migrator m, int from, int to) async {
-  //     if (from == 1) {
-  //       // Example migration: await m.addColumn(notes, notes.priority);
-  //     }
-  //   },
-  // );
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (Migrator m) => m.createAll(),
+    onUpgrade: (Migrator m, int from, int to) async {
+      if (from == 1) {
+        // We added the isPinned column to the notes table
+        await m.addColumn(notes, notes.isPinned);
+      }
+    },
+  );
 }
 
 /// Creates the Drift query executor using NativeDatabase with SQLCipher.
