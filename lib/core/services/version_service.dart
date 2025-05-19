@@ -14,7 +14,7 @@ const _lastVersionKey = 'last_app_version';
 /// 2. Update android/app/build.gradle.kts versionCode and versionName
 /// 3. Update currentAppVersion here
 /// 4. Add a new ReleaseInfo entry to the versionHistory list below
-const String currentAppVersion = '1.1.0';
+const String currentAppVersion = '1.2.0';
 
 /// Service for managing app version information and history
 class VersionService {
@@ -76,6 +76,25 @@ Future<VersionService> versionService(Ref ref) async {
 /// Static version history data
 /// Add new versions at the TOP of this list (reverse chronological order)
 final List<ReleaseInfo> versionHistory = [
+  // Version 1.2.0 - New Entry (Pin Note Feature)
+  ReleaseInfo(
+    version: '1.2.0',
+    releaseDate: DateTime.now(), // Use current date for release
+    changes: [
+      ReleaseChange(
+        category: 'Feature',
+        description: 'Added ability to pin notes to the top of the list.',
+      ),
+      ReleaseChange(
+        category: 'Improvement',
+        description: 'Pinned notes now appear first in the notes list and editor.',
+      ),
+      ReleaseChange(
+        category: 'Improvement',
+        description: 'Updated app versioning and What\'s New mechanism.',
+      ),
+    ],
+  ),
   // Version 1.1.0 - New Entry
   ReleaseInfo(
     version: '1.1.0',

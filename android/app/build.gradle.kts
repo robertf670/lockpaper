@@ -48,8 +48,8 @@ android {
         // 2. Update versionName to match the semantic version (also update in pubspec.yaml)
         // 3. Update currentAppVersion in lib/core/services/version_service.dart
         // 4. Add new release info to versionHistory list in the version_service.dart file
-        versionCode = 3
-        versionName = "1.1.0"
+        versionCode = 4
+        versionName = "1.2.0"
     }
 
     // Define signing configuration for release
