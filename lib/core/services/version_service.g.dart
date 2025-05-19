@@ -1,30 +1,29 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'pin_storage_service.dart';
+part of 'version_service.dart';
 
 // **************************************************************************
 // RiverpodGenerator
 // **************************************************************************
 
-String _$pinStorageServiceHash() => r'c1dec8d21cb4564bc1c9c32338d95ec7db778990';
+String _$versionServiceHash() => r'8f9f40b67046d247d2245dcd69556d63c83db0f9';
 
-/// Riverpod provider for the PinStorageService.
+/// Provider for the VersionService
 ///
-/// Copied from [pinStorageService].
-@ProviderFor(pinStorageService)
-final pinStorageServiceProvider =
-    AutoDisposeProvider<PinStorageService>.internal(
-  pinStorageService,
-  name: r'pinStorageServiceProvider',
+/// Copied from [versionService].
+@ProviderFor(versionService)
+final versionServiceProvider = FutureProvider<VersionService>.internal(
+  versionService,
+  name: r'versionServiceProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
       ? null
-      : _$pinStorageServiceHash,
+      : _$versionServiceHash,
   dependencies: null,
   allTransitiveDependencies: null,
 );
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef PinStorageServiceRef = AutoDisposeProviderRef<PinStorageService>;
+typedef VersionServiceRef = FutureProviderRef<VersionService>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

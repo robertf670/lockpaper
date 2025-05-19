@@ -54,3 +54,6 @@ plan.md
 
 # Signing configuration (contains secrets)
 /android/key.properties
+
+# Temporary build/debug logs
+/android/build_log.txt

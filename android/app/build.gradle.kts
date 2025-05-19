@@ -42,8 +42,14 @@ android {
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
-        versionCode = 1
-        versionName = "1.0.0"
+        
+        // IMPORTANT: When updating app version for release:
+        // 1. Increment versionCode by 1 for each new release
+        // 2. Update versionName to match the semantic version (also update in pubspec.yaml)
+        // 3. Update currentAppVersion in lib/core/services/version_service.dart
+        // 4. Add new release info to versionHistory list in the version_service.dart file
+        versionCode = 3
+        versionName = "1.1.0"
     }
 
     // Define signing configuration for release

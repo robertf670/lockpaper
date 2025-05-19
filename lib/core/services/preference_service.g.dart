@@ -6,15 +6,13 @@ part of 'preference_service.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$preferenceServiceHash() => r'8441f05207b031aa4018f810349c09f256d22b9d';
+String _$preferenceServiceHash() => r'370eb3cc2cdab5f77d85468c9e8ac5abf462a669';
 
-/// Riverpod provider for the PreferenceService.
-/// Uses FutureProvider since SharedPreferences.getInstance() is async.
+/// Provider for the PreferenceService itself.
 ///
 /// Copied from [preferenceService].
 @ProviderFor(preferenceService)
-final preferenceServiceProvider =
-    AutoDisposeFutureProvider<PreferenceService>.internal(
+final preferenceServiceProvider = FutureProvider<PreferenceService>.internal(
   preferenceService,
   name: r'preferenceServiceProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -26,11 +24,10 @@ final preferenceServiceProvider =
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef PreferenceServiceRef = AutoDisposeFutureProviderRef<PreferenceService>;
-String _$biometricsEnabledHash() => r'd3bb6721fed0ae88b93bd00cfa734cc05dcc8527';
+typedef PreferenceServiceRef = FutureProviderRef<PreferenceService>;
+String _$biometricsEnabledHash() => r'ce8ed87eadf07d0fe388421dcce8cd1176b81140';
 
-/// Simple provider for the current state of the biometrics preference.
-/// Reads from PreferenceService and handles the async nature.
+/// Simple boolean provider for easy access to the biometrics setting.
 ///
 /// Copied from [biometricsEnabled].
 @ProviderFor(biometricsEnabled)

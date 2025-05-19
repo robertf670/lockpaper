@@ -14,6 +14,8 @@ import 'package:lockpaper/core/presentation/screens/pin_change/enter_current_pin
 import 'package:lockpaper/core/presentation/screens/pin_change/enter_new_pin_screen.dart';
 import 'package:lockpaper/core/presentation/screens/pin_change/confirm_new_pin_screen.dart';
 import 'package:lockpaper/features/settings/presentation/screens/settings_screen.dart'; // Import SettingsScreen
+import 'package:lockpaper/features/settings/presentation/whats_new_screen.dart';
+import 'package:lockpaper/core/services/version_service.dart';
 
 /// Defines the application's routes using GoRouter.
 class AppRouter {
@@ -34,7 +36,7 @@ class AppRouter {
       initialLocation: notesPath, // Use path '/' for initial location
       debugLogDiagnostics: true,
       // refreshListenable: // Could potentially use a listenable based on appLockStateProvider
-      redirect: (BuildContext context, GoRouterState state) {
+      redirect: (BuildContext context, GoRouterState state) async {
         final isLocked = ref.read(appLockStateProvider);
         final currentLocation = state.matchedLocation; // More reliable than location/subloc
 
@@ -46,6 +48,17 @@ class AppRouter {
         // If unlocked and currently on the lock screen, redirect to home path
         if (!isLocked && currentLocation == lockRoute) {
           return notesPath; // Use path '/' for redirect target
+        }
+
+        // For unlocked state, check if we need to show the "What's New" screen
+        if (!isLocked && state.topRoute?.path != '/whats-new' && state.topRoute?.path != '/lock') {
+          // Only check for "What's New" if not already on that screen
+          // Check if this is an app update by looking at the version
+          final versionServiceAsync = await ref.read(versionServiceProvider.future);
+          if (versionServiceAsync.isUpdated) {
+            // Mark the version as seen after user views the what's new screen
+            return '/whats-new';
+          }
         }
 
         // No redirect needed
@@ -147,6 +160,14 @@ class AppRouter {
           builder: (BuildContext context, GoRouterState state) {
             return const SettingsScreen();
           },
+        ),
+        GoRoute(
+          path: '/whats-new',
+          builder: (context, state) => const WhatsNewScreen(),
+        ),
+        GoRoute(
+          path: '/version-history',
+          builder: (context, state) => const WhatsNewScreen(showAllHistory: true),
         ),
       ],
       errorBuilder: (context, state) => Scaffold( // Basic error screen
