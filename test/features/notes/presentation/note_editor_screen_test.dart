@@ -65,6 +65,7 @@ void main() {
     title: 'Test Title',
     body: 'Test Body',
     createdAt: DateTime.now(),
+    isPinned: false,
   );
 
   setUpAll(() {
@@ -568,5 +569,91 @@ void main() {
     });
 
     // TODO: Add tests for delete confirmation dialog (Cancel button)
+  });
+
+  group('Pinning Functionality', () {
+    testWidgets('Displays correct pin icon for existing pinned note', (WidgetTester tester) async {
+      final pinnedNote = testNote.copyWith(isPinned: true);
+      final testWidgetResult = createTestableWidget(
+        noteId: pinnedNote.id,
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      testWidgetResult.controller.add(pinnedNote);
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.push_pin), findsOneWidget);
+      expect(find.byIcon(Icons.push_pin_outlined), findsNothing);
+      await testWidgetResult.controller.close();
+    });
+
+    testWidgets('Displays correct pin icon for existing unpinned note', (WidgetTester tester) async {
+      final unpinnedNote = testNote.copyWith(isPinned: false);
+      final testWidgetResult = createTestableWidget(
+        noteId: unpinnedNote.id,
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      testWidgetResult.controller.add(unpinnedNote);
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.push_pin_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.push_pin), findsNothing);
+      await testWidgetResult.controller.close();
+    });
+
+    testWidgets('Does NOT display pin icon for new note', (WidgetTester tester) async {
+      final testWidgetResult = createTestableWidget(
+        noteId: null, // New note
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.push_pin), findsNothing);
+      expect(find.byIcon(Icons.push_pin_outlined), findsNothing);
+      await testWidgetResult.controller.close();
+    });
+
+    testWidgets('Tapping pin icon calls updatePinStatus and toggles icon', (WidgetTester tester) async {
+      final initialNote = testNote.copyWith(isPinned: false);
+      when(() => mockNoteDao.updatePinStatus(initialNote.id, true)).thenAnswer((_) async => true);
+      when(() => mockNoteDao.updatePinStatus(initialNote.id, false)).thenAnswer((_) async => true); // For toggling back
+
+      final testWidgetResult = createTestableWidget(
+        noteId: initialNote.id,
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      );
+      await tester.pumpWidget(testWidgetResult.widget);
+      testWidgetResult.controller.add(initialNote);
+      await tester.pumpAndSettle();
+
+      // Initial state: unpinned
+      expect(find.byIcon(Icons.push_pin_outlined), findsOneWidget);
+      final unpinnedIconFinder = find.byIcon(Icons.push_pin_outlined);
+
+      // Tap to pin
+      await tester.tap(unpinnedIconFinder);
+      await tester.pumpAndSettle(); // Allow UI to update after setState and async call
+      
+      verify(() => mockNoteDao.updatePinStatus(initialNote.id, true)).called(1);
+      expect(find.byIcon(Icons.push_pin), findsOneWidget); // Icon should now be pinned
+      expect(find.byIcon(Icons.push_pin_outlined), findsNothing);
+
+      // Tap to unpin
+      final pinnedIconFinder = find.byIcon(Icons.push_pin);
+      await tester.tap(pinnedIconFinder);
+      await tester.pumpAndSettle();
+
+      verify(() => mockNoteDao.updatePinStatus(initialNote.id, false)).called(1);
+      expect(find.byIcon(Icons.push_pin_outlined), findsOneWidget); // Icon should be unpinned again
+      expect(find.byIcon(Icons.push_pin), findsNothing);
+      
+      await testWidgetResult.controller.close();
+    });
   });
 } 

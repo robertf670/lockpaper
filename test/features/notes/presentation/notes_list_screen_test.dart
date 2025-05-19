@@ -43,9 +43,9 @@ void main() {
   late MockNoteDao mockNoteDao; // Add DAO mock variable
 
   // Sample notes data
-  final testNotes = [
-    Note(id: 1, title: 'Note 1', body: 'Body 1', createdAt: DateTime.now()),
-    Note(id: 2, title: 'Note 2', body: 'Body 2', createdAt: DateTime.now()),
+  final List<Note> testNotes = [
+    Note(id: 1, title: 'Note 1', body: 'Body 1', createdAt: DateTime.now(), isPinned: false),
+    Note(id: 2, title: 'Note 2', body: 'Body 2', createdAt: DateTime.now(), isPinned: false),
   ];
   final testError = Exception('Failed to load notes');
 
@@ -208,6 +208,98 @@ void main() {
         NoteEditorScreen.routeName, 
         pathParameters: {'id': '1'} // Expecting ID 1 for 'Note 1'
       )).called(1);
+    });
+
+    testWidgets('Displays correct pin icon and calls updatePinStatus on tap', (WidgetTester tester) async {
+      final now = DateTime.now();
+      final notesToTest = [
+        Note(id: 1, title: 'Pinned Note', body: 'Body', createdAt: now, isPinned: true),
+        Note(id: 2, title: 'Unpinned Note', body: 'Body', createdAt: now.subtract(const Duration(days: 1)), isPinned: false),
+      ];
+
+      // Mock DAO method
+      when(() => mockNoteDao.updatePinStatus(any(), any())).thenAnswer((_) async => true);
+
+      await tester.pumpWidget(createTestableWidget(
+        notesStreamController: notesStreamController,
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      ));
+      await tester.pump(); // Initial loading
+
+      notesStreamController.add(notesToTest);
+      await tester.pumpAndSettle();
+
+      // --- Test Pinned Note ---
+      final pinnedNoteTile = find.widgetWithText(ListTile, 'Pinned Note');
+      expect(pinnedNoteTile, findsOneWidget);
+      // Find the IconButton within the ListTile for the pinned note
+      final pinButtonPinned = find.descendant(
+        of: pinnedNoteTile,
+        matching: find.byType(IconButton),
+      );
+      expect(pinButtonPinned, findsOneWidget);
+      // Check icon and tooltip
+      expect(tester.widget<IconButton>(pinButtonPinned).icon is Icon && (tester.widget<IconButton>(pinButtonPinned).icon as Icon).icon == Icons.push_pin, isTrue);
+      expect(tester.widget<IconButton>(pinButtonPinned).tooltip, 'Unpin note');
+
+      // Tap to unpin
+      await tester.tap(pinButtonPinned);
+      await tester.pumpAndSettle();
+      verify(() => mockNoteDao.updatePinStatus(1, false)).called(1);
+
+      // --- Test Unpinned Note ---
+      final unpinnedNoteTile = find.widgetWithText(ListTile, 'Unpinned Note');
+      expect(unpinnedNoteTile, findsOneWidget);
+      // Find the IconButton within the ListTile for the unpinned note
+      final pinButtonUnpinned = find.descendant(
+        of: unpinnedNoteTile,
+        matching: find.byType(IconButton),
+      );
+      expect(pinButtonUnpinned, findsOneWidget);
+      // Check icon and tooltip
+      expect(tester.widget<IconButton>(pinButtonUnpinned).icon is Icon && (tester.widget<IconButton>(pinButtonUnpinned).icon as Icon).icon == Icons.push_pin_outlined, isTrue);
+      expect(tester.widget<IconButton>(pinButtonUnpinned).tooltip, 'Pin note');
+
+      // Tap to pin
+      await tester.tap(pinButtonUnpinned);
+      await tester.pumpAndSettle();
+      verify(() => mockNoteDao.updatePinStatus(2, true)).called(1);
+    });
+
+    testWidgets('Displays notes in correct order (pinned first, then by date)', (WidgetTester tester) async {
+      final now = DateTime.now();
+      final notesToTest = [
+        // Expected order: Pinned C (newest pinned), Pinned A (older pinned), Unpinned B (newest unpinned), Unpinned D (older unpinned)
+        Note(id: 3, title: 'Pinned C', body: 'Body', createdAt: now, isPinned: true), // Pinned, newest
+        Note(id: 1, title: 'Pinned A', body: 'Body', createdAt: now.subtract(const Duration(days: 2)), isPinned: true), // Pinned, oldest
+        Note(id: 2, title: 'Unpinned B', body: 'Body', createdAt: now.subtract(const Duration(days: 1)), isPinned: false), // Unpinned, newer
+        Note(id: 4, title: 'Unpinned D', body: 'Body', createdAt: now.subtract(const Duration(days: 3)), isPinned: false), // Unpinned, older
+      ];
+
+      // The stream provider is mocked to directly pass through the list.
+      // The actual sorting happens in NoteDao.watchAllNotes(), which this test implicitly relies on
+      // for the list to be in the correct order *before* it hits the UI.
+      // Here, we verify the UI renders the items in the order received from the stream.
+
+      await tester.pumpWidget(createTestableWidget(
+        notesStreamController: notesStreamController,
+        mockGoRouter: mockGoRouter,
+        mockNoteDao: mockNoteDao,
+      ));
+      await tester.pump(); // Initial loading
+
+      notesStreamController.add(notesToTest);
+      await tester.pumpAndSettle();
+
+      final listTiles = tester.widgetList<ListTile>(find.byType(ListTile)).toList();
+      expect(listTiles.length, 4);
+
+      // Check titles in order
+      expect((listTiles[0].title as Text).data, 'Pinned C');
+      expect((listTiles[1].title as Text).data, 'Pinned A');
+      expect((listTiles[2].title as Text).data, 'Unpinned B');
+      expect((listTiles[3].title as Text).data, 'Unpinned D');
     });
 
     // TODO: Test note deletion (Requires mocking DAO and UI implementation)
